@@ -147,7 +147,9 @@ gcloud builds submit --config cloudbuild.yaml
 
 ## CI/CD パイプライン（信頼ソース辞書の Git 管理 → 自動 deploy）
 
-![validate-trust-sources](https://github.com/liberaiz/ccbooster/actions/workflows/validate-trust-sources.yml/badge.svg)
+[![validate-trust-sources](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)
+
+> 🔧 **deploy job の現状**: `main` push で validate ジョブが自動実行（all-green）。Cloud Build → Cloud Run の **deploy job は `workflow_dispatch` 限定**（GCP Workload Identity Federation の secrets 設定後に push trigger へ昇格予定）。実機 deploy は `gcloud builds submit` を `scripts/` 経由で実行している。
 
 メティス指摘「DevOps接続を装飾でなく構造に」への直接回答。
 **信頼ソース125ドメイン**と**煽動パターン143語**を Python dict 直書きから外し、

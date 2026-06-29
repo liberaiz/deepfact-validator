@@ -5,6 +5,11 @@
 **応募方法：** 3 STEP（参加申込 → Proto Pedia 登録 → 作品提出フォーム）
 **一次情報：** https://findy.notion.site/devops-ai-agent-hackathon-2026
 
+**提出URL:**
+- 📦 **GitHub**: https://github.com/liberaiz/deepfact-validator
+- 🚀 **Live**: https://deepfact-validator-kjciocymea-an.a.run.app
+- 🔄 **CI/CD**: https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml
+
 ---
 
 ## 📋 必須要件（Notion 一次情報・2026-06-22 確認）

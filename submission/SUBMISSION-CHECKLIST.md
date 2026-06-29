@@ -46,7 +46,7 @@
   - [ ] プロダクト名: DeepFact Validator
   - [ ] 作品ステータス: 完成
   - [ ] 概要（1pager.md の内容を整形）
-  - [ ] スクリーンショット（5 枚精選）: ピッチ HTML v0.3 / demo-evidence v0.3 / Chrome Ext mock / Web UI mockup v0.3 / 6 パターン信頼度判定表
+  - [ ] スクリーンショット（5 枚精選）: ピッチ HTML v0.4 / demo-evidence v0.3 / Chrome Ext mock / Web UI mockup v0.3 / 6 パターン信頼度判定表
   - [ ] 動画: 60秒 Remotion MP4（YouTube URL）
   - [ ] 動作確認 URL: `https://deepfact-validator-kjciocymea-an.a.run.app`
   - [ ] 技術スタック: Cloud Run + Vertex AI Gemini 2.5-flash + FastAPI + LINE Messaging API + Chrome Extension（Manifest V3）
@@ -128,8 +128,8 @@
 
 提出 24 時間前までに 🛡️ アルゴス（argus-reviewer）で全提出物を独立目チェック：
 
-- [ ] README.md（v0.3 セクション 数値・URL・技術スタック）
-- [ ] ピッチ HTML v0.3（誇張表現・出典・固有名詞・数値整合性）
+- [ ] README.md（v1.1.4 セクション 数値・URL・技術スタック）
+- [ ] ピッチ HTML v0.4（誇張表現・出典・固有名詞・数値整合性）
 - [ ] demo-evidence v0.3（6 パターン スコア整合性・スクショと数値の一致）
 - [ ] 1pager.md（差別化主張・実機検証結果・連絡先）
 - [ ] Proto Pedia 作品ページ（プロダクト概要・URL・スクショ・連絡先）
