@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — Preview Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="popup.css">
+<style>
+  body { box-shadow: 0 4px 24px rgba(0,0,0,0.08); margin: 24px auto; }
+  html { background: #EFEDE5; }
+
+  /* === 案 A: ラベル中心 === */
+  .style-a .meter-center {
+    display: grid;
+    place-items: center;
+  }
+  .style-a-label {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    line-height: 1;
+    color: #1B2A4E;
+  }
+  .style-a-label.high { color: #3D8A55; }
+  .style-a-label.mid  { color: #C9A55C; }
+  .style-a-label.low,
+  .style-a-label.warn { color: #C8453B; }
+  .style-a .score-meta {
+    gap: 8px;
+  }
+  .style-a-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: #1B2A4E;
+  }
+  .style-a-pct.high { color: #3D8A55; }
+  .style-a-pct.mid  { color: #C9A55C; }
+  .style-a-pct.low,
+  .style-a-pct.warn { color: #C8453B; }
+  .style-a-icon {
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  /* === 案 B: 数字のみ === */
+  .style-b .meter-center {
+    display: grid;
+    place-items: center;
+  }
+  .style-b-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1;
+    color: #1B2A4E;
+  }
+  .style-b-num.high { color: #3D8A55; }
+  .style-b-num.mid  { color: #C9A55C; }
+  .style-b-num.low,
+  .style-b-num.warn { color: #C8453B; }
+
+  /* === 案 C: 数字+%同サイズ === */
+  .style-c .meter-center {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 1px;
+  }
+  .style-c-num,
+  .style-c-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1;
+    color: #1B2A4E;
+  }
+  .style-c-num.high, .style-c-pct.high { color: #3D8A55; }
+  .style-c-num.mid,  .style-c-pct.mid  { color: #C9A55C; }
+  .style-c-num.low,  .style-c-pct.low,
+  .style-c-num.warn, .style-c-pct.warn { color: #C8453B; }
+</style>
+</head>
+<body>
+<header class="header">
+  <span class="brand">DeepFact Validator</span>
+  <span class="brand-sub">情報のObservability</span>
+</header>
+<main>
+  <button id="analyze-current" class="btn-primary">このページを解析</button>
+  <div id="result" class="result">
+    <div class="score-block" id="score-block">
+      <div class="meter">
+        <svg class="meter-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="meter-track" cx="50" cy="50" r="42" fill="none"></circle>
+          <circle id="meter-progress" class="meter-progress" cx="50" cy="50" r="42" fill="none"
+                  stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
+        </svg>
+        <div class="meter-center" id="meter-center"></div>
+      </div>
+      <div class="score-meta" id="score-meta"></div>
+    </div>
+    <div id="summary" class="summary"></div>
+    <h3>構造観察</h3>
+    <ul id="observations" class="observations"></ul>
+    <h3>一次情報</h3>
+    <ul id="primary-sources" class="primary-sources"></ul>
+    <h3 id="evidence-heading" class="evidence-heading">判定エビデンス・ソース</h3>
+    <div id="evidence-sources" class="evidence-sources"></div>
+  </div>
+</main>
+<script>
+const SCENARIOS = {
+  high: {
+    pct: 92,
+    label: "高",
+    icon: "✅",
+    band: "high",
+    summary: "厚生労働省・PMDA・WHO 等の一次ソースを直接引用し、定量データに出典が明示されている。論調も中立的で、対立意見への目配りも見られる。",
+    obs: [
+      "定量データの出典 (厚労省/PMDA) が明記",
+      "断定表現を避け、限界条件を併記",
+      "対立する論点 (副作用率) を別段落で言及"
+    ],
+    primary: [
+      "https://www.mhlw.go.jp/...",
+      "https://www.pmda.go.jp/..."
+    ],
+    evidence: [
+      { rating: "正確", ratingClass: "safe", publisher: "厚生労働省", title: "予防接種の有効性と副反応の最新エビデンス", url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou/kekkaku-kansenshou01/dl/yobou-set.pdf" },
+      { rating: "正確", ratingClass: "safe", publisher: "PMDA", title: "添付文書情報 — 医薬品の安全性情報", url: "https://www.pmda.go.jp/PmdaSearch/iyakuSearch/" },
+      { rating: "公的情報", ratingClass: "accent", publisher: "WHO", title: "Immunization coverage — Key facts", url: "https://www.who.int/news-room/fact-sheets/detail/immunization-coverage" }
+    ]
+  },
+  mid: {
+    pct: 65,
+    label: "中",
+    icon: "〽️",
+    band: "mid",
+    summary: "個別事例 (n=1) を中心に組み立てられた記事。引用ソースは存在するが、メタアナリシス・ガイドラインへの参照は薄い。「効果があった」とする方向への偏りがやや見られる。",
+    obs: [
+      "個別ケース報告に依存 (n=1 のエピソード)",
+      "効果有りの方向への語彙バイアス",
+      "対立する研究結果への言及がない"
+    ],
+    primary: [
+      "https://pubmed.ncbi.nlm.nih.gov/...",
+      "https://www.jmaj.jp/..."
+    ],
+    evidence: [
+      { rating: "一部正確", ratingClass: "accent", publisher: "日本医師会", title: "症例報告の解釈に関する留意点", url: "https://www.med.or.jp/" },
+      { rating: "中立", ratingClass: "", publisher: "PubMed", title: "Single-case methodology in clinical research", url: "https://pubmed.ncbi.nlm.nih.gov/" }
+    ]
+  },
+  low: {
+    pct: 32,
+    label: "低",
+    icon: "⚠️",
+    band: "low",
+    summary: "感情的な訴求語が頻出し、出典の多くが匿名 SNS 投稿。一部に研究論文が引用されているが、文脈と一致しない引用が見られる。",
+    obs: [
+      "感情強度語 (驚愕・絶対・必ず) が複数回",
+      "引用は SNS 匿名アカウント中心",
+      "論文引用が原文の文脈と一致しない"
+    ],
+    primary: [
+      "（信頼できる一次情報URLが不明確）"
+    ],
+    evidence: [
+      { rating: "誤解を招く", ratingClass: "warn", publisher: "FactCheck.org", title: "Misleading citation of clinical study", url: "https://www.factcheck.org/" },
+      { rating: "一部誤り", ratingClass: "warn", publisher: "日本ファクトチェックセンター", title: "SNSで拡散の主張 — 一部は事実と異なる", url: "https://www.factcheckcenter.jp/" }
+    ]
+  },
+  warn: {
+    pct: 20,
+    label: "警告",
+    icon: "🚨",
+    band: "warn",
+    summary: "3日でガン消失・副作用ゼロ・拡散希望の語が同時に並ぶ典型的なプロパガンダ構造。一次情報URLが存在せず、信頼ドメインからのソースも見当たらない。",
+    obs: [
+      "感情強度語（驚愕・拡散希望・絶対）が短文内に複数",
+      "「医師は隠している」など匿名権威への訴え",
+      "定量データの根拠提示なし"
+    ],
+    primary: [
+      "記事中に信頼できる一次情報URLが見つかりません"
+    ],
+    evidence: [
+      { rating: "虚偽", ratingClass: "warn", publisher: "Snopes", title: "Cancer cure claims regarding viral social media posts have been debunked", url: "https://www.snopes.com/fact-check/cancer-cure-claim" },
+      { rating: "誤り", ratingClass: "warn", publisher: "日本ファクトチェックセンター", title: "「3日でガン消失」拡散投稿は根拠不明 医学的裏付けなし", url: "https://www.factcheckcenter.jp/fact-check/health/3days-cancer-cure/" },
+      { rating: "公的情報", ratingClass: "accent", publisher: "厚生労働省", title: "がんの民間療法に関する正しい情報の見極め方", url: "https://www.mhlw.go.jp/cancer/folk-medicine.html" }
+    ]
+  }
+};
+
+function escapeHtml(s) {
+  if (s === undefined || s === null) return "";
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function renderStyleA(s) {
+  // ラベル中心：円中央に大きく「警告/低/中/高」、メタ欄に「20% 🚨」
+  document.getElementById("meter-center").innerHTML =
+    '<span class="style-a-label ' + s.band + '">' + escapeHtml(s.label) + "</span>";
+  document.getElementById("score-meta").innerHTML =
+    '<span class="score-meta-label">信頼度</span>' +
+    '<span class="style-a-pct ' + s.band + '">' + s.pct + "%</span>" +
+    '<span class="style-a-icon">' + s.icon + "</span>";
+}
+
+function renderStyleB(s) {
+  // 数字のみ：円中央に「20」のみ、メタ欄にラベル＋アイコン
+  document.getElementById("meter-center").innerHTML =
+    '<span class="style-b-num ' + s.band + '">' + s.pct + "</span>";
+  document.getElementById("score-meta").innerHTML =
+    '<span class="score-meta-label">信頼度</span>' +
+    '<span class="score-band ' + s.band + '">' +
+      '<span class="score-band-icon">' + s.icon + "</span>" +
+      '<span class="score-band-text">' + escapeHtml(s.label) + "</span>" +
+    "</span>";
+}
+
+function renderStyleC(s) {
+  // 数字+%同サイズ：「20%」を全部同サイズで baseline 完全揃え
+  document.getElementById("meter-center").innerHTML =
+    '<span class="style-c-num ' + s.band + '">' + s.pct + "</span>" +
+    '<span class="style-c-pct ' + s.band + '">%</span>';
+  document.getElementById("score-meta").innerHTML =
+    '<span class="score-meta-label">信頼度</span>' +
+    '<span class="score-band ' + s.band + '">' +
+      '<span class="score-band-icon">' + s.icon + "</span>" +
+      '<span class="score-band-text">' + escapeHtml(s.label) + "</span>" +
+    "</span>";
+}
+
+function render(s) {
+  const style = (new URLSearchParams(location.search).get("style") || "A").toUpperCase();
+  const block = document.getElementById("score-block");
+  block.classList.add("style-" + style.toLowerCase());
+
+  if (style === "B") renderStyleB(s);
+  else if (style === "C") renderStyleC(s);
+  else renderStyleA(s);
+
+  const ring = document.getElementById("meter-progress");
+  ring.classList.remove("high", "mid", "low", "warn");
+  ring.classList.add(s.band);
+  const C = 263.89;
+  ring.setAttribute("stroke-dasharray", C.toFixed(2));
+  ring.setAttribute("stroke-dashoffset", (C * (1 - s.pct / 100)).toFixed(2));
+
+  document.getElementById("summary").textContent = s.summary;
+
+  document.getElementById("observations").innerHTML = s.obs
+    .map((o) => "<li>" + escapeHtml(o) + "</li>")
+    .join("");
+
+  document.getElementById("primary-sources").innerHTML = s.primary
+    .map((p) => "<li>" + escapeHtml(p) + "</li>")
+    .join("");
+
+  const evContainer = document.getElementById("evidence-sources");
+  evContainer.innerHTML = "";
+  s.evidence.forEach((ev) => {
+    const a = document.createElement("a");
+    a.className = "evidence-card";
+    a.href = ev.url || "#";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.innerHTML =
+      '<div class="evidence-card-head">' +
+        '<span class="evidence-rating ' + (ev.ratingClass || "") + '">' + escapeHtml(ev.rating) + "</span>" +
+        '<span class="evidence-publisher">' + escapeHtml(ev.publisher) + "</span>" +
+      "</div>" +
+      '<div class="evidence-title">' + escapeHtml(ev.title) + "</div>" +
+      '<div class="evidence-url">' + escapeHtml(ev.url) + "</div>";
+    evContainer.appendChild(a);
+  });
+}
+
+const params = new URLSearchParams(location.search);
+const band = params.get("band") || "warn";
+const scenario = SCENARIOS[band] || SCENARIOS.warn;
+render(scenario);
+</script>
+</body>
+</html>

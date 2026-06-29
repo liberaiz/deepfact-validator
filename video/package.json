@@ -1,0 +1,23 @@
+{
+  "name": "deepfact-validator-video",
+  "version": "0.1.0",
+  "description": "DeepFact Validator hackathon demo video (60s, A1 native Remotion + B2 + C1 subtitles)",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render MainComposition out/deepfact-demo.mp4 --codec=h264 --crf=18",
+    "build-webm": "remotion render MainComposition out/deepfact-demo.webm --codec=vp9",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.481",
+    "@remotion/google-fonts": "4.0.481",
+    "remotion": "4.0.481",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — メーター表記 3 案比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&display=swap">
+<style>
+  html, body { margin: 0; padding: 0; background: #EFEDE5; }
+  body {
+    font-family: 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+    color: #1B2A4E;
+    padding: 28px 24px 40px;
+  }
+  .title {
+    font-family: 'Cormorant Garamond', 'Shippori Mincho B1', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+  }
+  .title-sub {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: rgba(27, 42, 78, 0.6);
+    margin-bottom: 22px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 380px);
+    gap: 28px;
+    justify-content: center;
+    align-items: start;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .col-label {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    margin-bottom: 4px;
+    padding: 4px 10px;
+    border-bottom: 1px solid #1B2A4E;
+    color: #1B2A4E;
+  }
+  .col-desc {
+    font-size: 11px;
+    color: rgba(27, 42, 78, 0.6);
+    margin-bottom: 12px;
+    text-align: center;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+  iframe {
+    border: none;
+    width: 380px;
+    height: 920px;
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+    background: #F8F6F1;
+  }
+</style>
+</head>
+<body>
+<h1 class="title">DeepFact Validator — メーター表記 3 案比較</h1>
+<div class="title-sub">A: ラベル中心 / B: 数字のみ / C: 数字+%同サイズ</div>
+<div class="grid">
+  <div class="col">
+    <div class="col-label">案 A — ラベル中心</div>
+    <div class="col-desc">円中央に「警告」を大きく明朝で。<br>20% は下のメタ欄に集約。</div>
+    <iframe src="popup-preview-mock.html?style=A&band=warn"></iframe>
+  </div>
+  <div class="col">
+    <div class="col-label">案 B — 数字のみ</div>
+    <div class="col-desc">円中央に「20」のみ大きく。<br>%は外し、ラベル＋アイコンは下のメタ欄へ。</div>
+    <iframe src="popup-preview-mock.html?style=B&band=warn"></iframe>
+  </div>
+  <div class="col">
+    <div class="col-label">案 C — 数字+% 同サイズ</div>
+    <div class="col-desc">「20%」を同フォントサイズで baseline 揃え。<br>サイズ差を排して完全中央配置。</div>
+    <iframe src="popup-preview-mock.html?style=C&band=warn"></iframe>
+  </div>
+</div>
+</body>
+</html>

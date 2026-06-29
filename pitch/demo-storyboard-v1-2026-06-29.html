@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepFact Validator — デモ動画 ストーリーボード v1</title>
+<style>
+/*
+  ストーリーボード HTML
+  紙地ベース (#F4F1E8) + 墨色 + 深緑 / 紺金禁止
+  A4横相当の印刷想定レイアウト（画面表示でも可読）
+  フレーム数: 10フレーム（0-90秒）
+*/
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #EDEBE3;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  color: #1F1F1F;
+  padding: 40px 32px 60px;
+}
+
+/* ── ページヘッダー ─────────────────── */
+.page-header {
+  max-width: 1200px;
+  margin: 0 auto 36px;
+  border-bottom: 2px solid #1F1F1F;
+  padding-bottom: 16px;
+}
+.page-eyebrow {
+  font-size: 12px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  letter-spacing: 6px; color: #2D5A40;
+  font-weight: 500; margin-bottom: 8px;
+}
+.page-title {
+  font-size: 28px; font-weight: 600;
+  letter-spacing: 2px; line-height: 1.3;
+}
+.page-meta {
+  display: flex; gap: 32px;
+  margin-top: 10px;
+  font-size: 12px; color: #6A6A6A;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.page-meta span { letter-spacing: 1px; }
+
+/* ── フレームグリッド ──────────────── */
+.grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* ── 個別フレームカード ────────────── */
+.frame {
+  background: #F8F6F1;
+  border: 1px solid #C5BFA8;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+/* フレームヘッダー（番号・タイムコード） */
+.frame-head {
+  background: #F4F1E8;
+  border-bottom: 1px solid #C5BFA8;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.frame-num {
+  font-size: 22px; font-weight: 600;
+  color: #2D5A40; letter-spacing: 1px;
+  line-height: 1;
+  min-width: 36px;
+}
+.frame-timecode {
+  font-size: 11px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500; letter-spacing: 1px;
+  color: #8A846E;
+  background: #EDE8DB;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.frame-label {
+  font-size: 13px; font-weight: 600;
+  color: #1F1F1F; letter-spacing: 1px;
+  flex: 1;
+}
+
+/* 画面イメージエリア */
+.frame-screen {
+  background: #2A2A2A;
+  min-height: 160px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 各フレームのスクリーンビジュアル */
+.screen-content {
+  width: 100%;
+  height: 160px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* フレームボディ（テキスト情報） */
+.frame-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.info-label {
+  font-size: 9px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 600; letter-spacing: 3px;
+  color: #2D5A40;
+  background: rgba(45,90,64,0.08);
+  padding: 2px 6px; border-radius: 2px;
+  white-space: nowrap; margin-top: 1px;
+  min-width: 64px; text-align: center;
+}
+.info-label.red {
+  color: #8B3A2E;
+  background: rgba(139,58,46,0.08);
+}
+.info-text {
+  font-size: 13px; color: #2A2A2A;
+  line-height: 1.6; letter-spacing: 0.3px;
+}
+
+.emphasis {
+  font-weight: 600; color: #2D5A40;
+}
+.emphasis.red { color: #8B3A2E; }
+
+/* ── スクリーンビジュアル個別スタイル ── */
+
+/* F1: 問題提起 — 新聞/ニュース積み重なり */
+.s1 {
+  background: linear-gradient(160deg, #1A1A1A 0%, #2A2520 100%);
+}
+.s1-quote {
+  font-size: 15px; color: #F4F1E8;
+  text-align: center; line-height: 1.8;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-style: italic; letter-spacing: 1px;
+  border-left: 3px solid #2D5A40;
+  padding: 8px 16px;
+  margin: 0 16px;
+}
+.s1-name {
+  font-size: 11px; color: #8A8A7A;
+  margin-top: 10px; letter-spacing: 2px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+/* F2: ユーザーがYahoo!ニュースを見る */
+.s2 { background: #F0F0F0; }
+.browser-bar {
+  width: 90%; height: 22px;
+  background: #FFFFFF;
+  border-radius: 3px;
+  display: flex; align-items: center;
+  padding: 0 8px; gap: 6px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.browser-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.browser-url {
+  font-size: 9px; color: #666;
+  font-family: monospace; letter-spacing: 0.5px;
+}
+.news-card {
+  width: 90%; background: white;
+  border-radius: 3px; padding: 8px 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.news-headline {
+  font-size: 11px; color: #1A1A1A;
+  font-weight: 600; line-height: 1.4;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.ext-badge {
+  position: absolute;
+  bottom: 10px; right: 10px;
+  background: rgba(45,90,64,0.9);
+  color: white; font-size: 8px;
+  padding: 3px 8px; border-radius: 2px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  letter-spacing: 1px;
+}
+
+/* F3: Watcher スキャン */
+.s3 { background: linear-gradient(135deg, #1A1F1A 0%, #0F1A10 100%); }
+.agent-flow {
+  display: flex; align-items: center;
+  gap: 8px; margin-bottom: 10px;
+}
+.agent-chip {
+  padding: 4px 10px;
+  border: 1px solid #2D5A40;
+  border-radius: 2px;
+  font-size: 10px; color: #A8C8A8;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  letter-spacing: 1px; font-weight: 500;
+}
+.agent-chip.active {
+  background: #2D5A40; color: white;
+}
+.scan-text {
+  font-size: 10px; color: #8AC88A;
+  font-family: monospace; text-align: left;
+  width: 90%; line-height: 1.8;
+}
+
+/* F4: Investigator → Validator */
+.s4 { background: linear-gradient(135deg, #1A1F1A 0%, #0F1A10 100%); }
+.progress-bar {
+  width: 80%; height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px; margin-bottom: 8px;
+  position: relative; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: #2D5A40;
+  border-radius: 2px;
+}
+.score-display {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  justify-content: center;
+}
+.score-item {
+  text-align: center;
+}
+.score-val {
+  font-size: 22px; font-weight: 600;
+  color: #F4F1E8; letter-spacing: 1px;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+.score-val.warn { color: #E8A080; }
+.score-lbl {
+  font-size: 8px; color: #8A8A7A;
+  letter-spacing: 2px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+/* F5: 警告ポップアップ */
+.s5 { background: #E8E4DC; }
+.popup {
+  width: 88%;
+  background: white;
+  border-radius: 4px;
+  border-top: 4px solid #8B3A2E;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.popup-head {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 6px;
+}
+.popup-icon {
+  width: 18px; height: 18px;
+  background: #8B3A2E; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 11px; font-weight: 700;
+}
+.popup-title {
+  font-size: 11px; font-weight: 700;
+  color: #8B3A2E;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.popup-score-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.popup-score {
+  font-size: 24px; font-weight: 700;
+  color: #8B3A2E; font-family: serif;
+}
+.popup-desc {
+  font-size: 9px; color: #5A5A5A;
+  line-height: 1.5;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.popup-fb {
+  margin-top: 7px;
+  font-size: 8.5px; color: #2D5A40;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  text-decoration: underline; cursor: pointer;
+}
+
+/* F6: ユーザーフィードバック */
+.s6 { background: #E8E4DC; }
+.fb-popup {
+  width: 88%; background: white;
+  border-radius: 4px; border-top: 3px solid #2D5A40;
+  padding: 10px 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+.fb-q {
+  font-size: 10px; color: #1F1F1F; font-weight: 600;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  margin-bottom: 8px;
+}
+.fb-opts { display: flex; gap: 6px; flex-wrap: wrap; }
+.fb-btn {
+  padding: 4px 10px;
+  border: 1px solid #C5BFA8;
+  border-radius: 2px;
+  font-size: 9px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  color: #2A2A2A; cursor: pointer;
+  background: #F8F6F1;
+}
+.fb-btn.sel {
+  background: #2D5A40; color: white; border-color: #2D5A40;
+}
+
+/* F7: Cloud Logging → Postmortem */
+.s7 { background: linear-gradient(135deg, #0F1210 0%, #1A201A 100%); }
+.log-lines {
+  width: 92%; text-align: left;
+}
+.log-line {
+  font-size: 9px; line-height: 1.8;
+  font-family: "JetBrains Mono", "Courier New", monospace;
+}
+.log-ts { color: #6A8A6A; }
+.log-sev { color: #8AC880; font-weight: 600; }
+.log-sev.warn { color: #E8C060; }
+.log-msg { color: #D0D8D0; }
+
+/* F8: GitHub PR 自動生成 → Cloud Build */
+.s8 { background: linear-gradient(135deg, #10120F 0%, #1A1F18 100%); }
+.git-pr {
+  width: 90%; background: rgba(45,90,64,0.15);
+  border: 1px solid #2D5A40;
+  border-radius: 3px; padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.git-pr-head {
+  font-size: 9px; color: #8AC880;
+  font-family: monospace; margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.git-pr-title {
+  font-size: 11px; color: #E8F0E8;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 600; line-height: 1.4;
+}
+.build-status {
+  display: flex; align-items: center; gap: 6px;
+}
+.build-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2D5A40;
+  animation: none;
+}
+.build-label {
+  font-size: 9px; color: #8AC880;
+  font-family: monospace; letter-spacing: 1px;
+}
+
+/* F9: LINE Bot 共有 */
+.s9 { background: #F0F2EC; }
+.line-phone {
+  width: 72%; background: white;
+  border-radius: 8px; padding: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+.line-header {
+  background: #06C755; border-radius: 6px 6px 0 0;
+  padding: 5px 8px; margin: -8px -8px 8px;
+  font-size: 10px; color: white; font-weight: 600;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  text-align: center;
+}
+.line-msg {
+  margin-bottom: 6px;
+}
+.line-bubble {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 12px 12px 12px 2px;
+  background: #F8F8F8;
+  font-size: 9px; color: #1A1A1A;
+  line-height: 1.5; max-width: 90%;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.line-bubble.green {
+  background: #D6F0DE; color: #1A3A22;
+  border-radius: 12px 12px 2px 12px;
+  float: right; clear: both;
+}
+
+/* F10: クロージング */
+.s10 {
+  background: linear-gradient(160deg, #1A1F1A 0%, #0D1A0E 100%);
+}
+.closing-tagline {
+  font-size: 16px; color: #F4F1E8;
+  text-align: center; line-height: 1.7;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  letter-spacing: 2px;
+  border: 1px solid rgba(45,90,64,0.4);
+  padding: 16px 20px; margin: 0 16px;
+}
+.closing-product {
+  font-size: 13px; color: #2D5A40;
+  margin-top: 12px; letter-spacing: 4px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500;
+}
+
+/* ── フレーム強調ポイントバー ─────── */
+.frame-emph {
+  background: rgba(45,90,64,0.06);
+  border-top: 1px solid #DDDACC;
+  padding: 8px 16px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.emph-icon {
+  font-size: 11px; color: #2D5A40;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 600; letter-spacing: 2px;
+  white-space: nowrap; padding-top: 1px;
+  min-width: 52px;
+}
+.emph-text {
+  font-size: 11px; color: #2D5A40;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  line-height: 1.5; font-weight: 600;
+}
+
+/* ── フッター ─────────────────────── */
+.page-footer {
+  max-width: 1200px;
+  margin: 36px auto 0;
+  border-top: 1px solid #C5BFA8;
+  padding-top: 14px;
+  display: flex; justify-content: space-between;
+  align-items: center;
+}
+.footer-left {
+  font-size: 11px; color: #9A9480;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  letter-spacing: 1px; line-height: 1.6;
+}
+.footer-right {
+  font-size: 11px; color: #9A9480;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  letter-spacing: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ページヘッダー -->
+<div class="page-header">
+  <div class="page-eyebrow">DEVOPS × AI AGENT HACKATHON 2026 — デモ動画ストーリーボード</div>
+  <div class="page-title">DeepFact Validator<br>60-90秒 デモ動画 シナリオ</div>
+  <div class="page-meta">
+    <span>バージョン: v1.0</span>
+    <span>作成日: 2026-06-29</span>
+    <span>フレーム数: 10</span>
+    <span>総尺: 90秒</span>
+    <span>株式会社 Liberaiz / Dr.加藤</span>
+  </div>
+</div>
+
+<!-- フレームグリッド -->
+<div class="grid">
+
+  <!-- ===== FRAME 1 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">01</div>
+      <div class="frame-timecode">0 — 5 sec</div>
+      <div class="frame-label">問題提起 — 医師の習慣</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s1">
+        <div class="s1-quote">
+          「真偽判断は<br>一次情報まで遡る。<br>これが医師の習慣です。」
+        </div>
+        <div class="s1-name">Dr. 加藤 ── 医師・医学博士・Anthropic Certified 三冠</div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「誤情報が医療の現場にも流入しています。医師として私が実践してきた"一次情報まで遡る"という習慣——これを、AIエージェントで社会全体に拡張できないか。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">暗背景に白抜き引用文。Dr.加藤の肩書きをフェードイン。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">創業者の個人ストーリーから始める。プロダクト説明より先に「なぜ作ったか」を1行で刺す。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 2 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">02</div>
+      <div class="frame-timecode">5 — 15 sec</div>
+      <div class="frame-label">日常シーン — Chrome Extension 常時待機</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s2">
+        <div class="browser-bar">
+          <div class="browser-dot" style="background:#E57373;"></div>
+          <div class="browser-dot" style="background:#FFB74D;"></div>
+          <div class="browser-dot" style="background:#81C784;"></div>
+          <div class="browser-url">news.yahoo.co.jp/articles/...</div>
+        </div>
+        <div class="news-card">
+          <div class="news-headline">「ワクチンに極秘成分が混入——内部告発者が証拠映像を公開」</div>
+        </div>
+        <div class="ext-badge">DeepFact 待機中...</div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「普通のユーザーが Yahoo!ニュースを開く。Chrome拡張機能は常時待機中——記事を読み始めた瞬間、エージェントが起動します。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">ブラウザ画面。右下に DeepFact Extension バッジが緑点灯。センセーショナルな見出しの記事。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">「質問前に能動介入」——ユーザーが何もしなくても監視が始まる点を見せる。既存ツールとの最大差分。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 3 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">03</div>
+      <div class="frame-timecode">15 — 22 sec</div>
+      <div class="frame-label">Watcher Agent — 記事スキャン</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s3">
+        <div class="agent-flow">
+          <div class="agent-chip active">Watcher</div>
+          <div style="color:#4A7A5A;font-size:14px;">→</div>
+          <div class="agent-chip">Investigator</div>
+          <div style="color:#4A7A5A;font-size:14px;">→</div>
+          <div class="agent-chip">Validator</div>
+        </div>
+        <div class="scan-text">
+          <div class="log-line"><span style="color:#6A8A6A;">[Watcher]</span> <span style="color:#D0D8D0;">主張抽出: "極秘成分"</span></div>
+          <div class="log-line"><span style="color:#6A8A6A;">[Watcher]</span> <span style="color:#E8C060;">感情強度: 0.92 HIGH</span></div>
+          <div class="log-line"><span style="color:#6A8A6A;">[Watcher]</span> <span style="color:#E87060;">煽動パターン: conspiracy ✓</span></div>
+          <div class="log-line"><span style="color:#6A8A6A;">[Watcher]</span> <span style="color:#D0D8D0;">出典URL: 未提示</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「Watcher エージェントが記事の主張・感情強度・煽動パターンを自動抽出。100語以上の陰謀論キーワード辞書でフラグを立てます。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">ターミナル風のログ表示。3エージェントのフローが上部に表示され、Watcherがハイライト。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">Gemini 不要の fallback（煽動パターン辞書）が高速動作することを示す。マルチエージェントの「分業」が視覚的にわかる。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 4 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">04</div>
+      <div class="frame-timecode">22 — 30 sec</div>
+      <div class="frame-label">Investigator → Validator — 統合スコア算出</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s4">
+        <div class="agent-flow">
+          <div class="agent-chip">Watcher</div>
+          <div style="color:#4A7A5A;font-size:14px;">→</div>
+          <div class="agent-chip active">Investigator</div>
+          <div style="color:#4A7A5A;font-size:14px;">→</div>
+          <div class="agent-chip active">Validator</div>
+        </div>
+        <div class="progress-bar" style="margin-top:10px;">
+          <div class="progress-fill" style="width:100%;"></div>
+        </div>
+        <div class="score-display" style="margin-top:8px;">
+          <div class="score-item">
+            <div class="score-val warn">20%</div>
+            <div class="score-lbl">TRUST SCORE</div>
+          </div>
+          <div class="score-item">
+            <div class="score-val" style="color:#E8C060;">0.10</div>
+            <div class="score-lbl">SOURCE</div>
+          </div>
+          <div class="score-item">
+            <div class="score-val" style="color:#E87060;">0.00</div>
+            <div class="score-lbl">FACT</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「Investigator が 125 の信頼ドメインと照合し、Google Fact Check API・Wikipedia を並列取得。Validator が統合——信頼度スコア <span class="emphasis red">20%「警告」</span>。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">プログレスバーが完了。3軸スコアが赤でアニメーション表示。実機検証値（v0.3）と同一スコアを表示。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">実機検証済みの数値（98% vs 20% = 78pt差）をここで先出し。「これは実際に動いている」を印象付ける。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 5 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">05</div>
+      <div class="frame-timecode">30 — 40 sec</div>
+      <div class="frame-label">警告ポップアップ — ユーザーへの通知</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s5">
+        <div class="popup">
+          <div class="popup-head">
+            <div class="popup-icon">!</div>
+            <div class="popup-title">DeepFact — 情報構造に注意</div>
+          </div>
+          <div class="popup-score-row">
+            <div class="popup-score">20%</div>
+            <div class="popup-desc">
+              出所：未検証サイト<br>
+              煽動パターン：conspiracy 型 検出<br>
+              一次情報：厚労省・WHO に反する記述あり<br>
+              📚 PolitiFact / WHO ファクトチェック参照
+            </div>
+          </div>
+          <div class="popup-fb">&#x1F4AC; この判定は誤りですか？ フィードバックする</div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「画面にオーバーレイで警告が出ます。スコア・煽動パターン・参照した一次情報ソースを明示。ユーザーは読み続けるかどうかを自分で判断できます。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">ブラウザ右下にポップアップがスライドイン。判定エビデンスURL（PolitiFact等）が表示。「誤りですか？」フィードバックボタン。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">「個人・組織を断定攻撃しない」Brand Soul 品格原則。「構造を見せる」設計であることを示す。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 6 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">06</div>
+      <div class="frame-timecode">40 — 48 sec</div>
+      <div class="frame-label">HITL — ユーザーフィードバック</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s6">
+        <div class="fb-popup">
+          <div class="fb-q">この警告についてどう思いますか？</div>
+          <div class="fb-opts">
+            <div class="fb-btn sel">&#x2714; 誤判定だと思う</div>
+            <div class="fb-btn">警告は正しい</div>
+            <div class="fb-btn">よくわからない</div>
+          </div>
+          <div style="margin-top:8px;font-size:8.5px;color:#6A6A6A;font-family:'Hiragino Sans','Yu Gothic',sans-serif;line-height:1.5;">
+            フィードバックは匿名で記録されます。<br>信頼ソース辞書の改善に使われます。
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「これが Human-in-the-Loop です。ユーザーが『誤判定』とフィードバックすると——警告履歴が Cloud Logging に記録され、Postmortem サイクルが始まります。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">フィードバックUIが表示。「誤判定だと思う」を選択。送信ボタンをタップ。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">審査基準「HITL」直撃。ユーザーの判断が DevOps ループに繋がることを予告する。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 7 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">07</div>
+      <div class="frame-timecode">48 — 58 sec</div>
+      <div class="frame-label">Cloud Logging — Postmortem 記録</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s7">
+        <div class="log-lines">
+          <div class="log-line">
+            <span class="log-ts">2026-06-29T09:14:32Z</span>
+            <span class="log-sev warn"> [WARNING] </span>
+            <span class="log-msg">alert_fired url=yahoo/... score=0.20</span>
+          </div>
+          <div class="log-line">
+            <span class="log-ts">2026-06-29T09:14:35Z</span>
+            <span class="log-sev"> [INFO] </span>
+            <span class="log-msg">user_feedback: false_positive</span>
+          </div>
+          <div class="log-line">
+            <span class="log-ts">2026-06-29T09:14:35Z</span>
+            <span class="log-sev"> [INFO] </span>
+            <span class="log-msg">postmortem_created id=PM-2026-0042</span>
+          </div>
+          <div class="log-line">
+            <span class="log-ts">2026-06-29T09:14:36Z</span>
+            <span class="log-sev"> [INFO] </span>
+            <span class="log-msg">github_pr_queued: trusted-source update</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「フィードバックは即座に Cloud Logging へ。警告ID・スコア・ユーザー判断が SRE の Postmortem 形式で記録。誤情報を"情報の障害"として扱うのが DeepFact の DevOps 設計です。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">Cloud Console 風のターミナル。ログが流れ、postmortem_created と github_pr_queued が表示。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">メティス指摘「DevOps 関連性の証拠なし」への直接回答。Cloud Logging の実ログを見せる。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 8 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">08</div>
+      <div class="frame-timecode">58 — 68 sec</div>
+      <div class="frame-label">GitHub PR 自動生成 → Cloud Build</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s8">
+        <div class="git-pr">
+          <div class="git-pr-head">Pull Request #147 — auto-generated by DeepFact</div>
+          <div class="git-pr-title">feat: add Reuters Fact Check<br>to trusted-source whitelist</div>
+        </div>
+        <div class="build-status">
+          <div class="build-dot"></div>
+          <div class="build-label">Cloud Build: BUILDING... → SUCCESS ✓</div>
+        </div>
+        <div style="margin-top:6px;font-size:8px;color:#6A8A6A;font-family:monospace;letter-spacing:0.5px;">
+          cloudbuild.yaml triggered / Firestore updated / revision 00012
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「Postmortem の結果から、信頼ソースリストの更新 PR が GitHub に自動生成。Cloud Build がトリガーされ——数分で改善版がデプロイされます。これが情報の CI/CD です。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">GitHub PR 画面 → Cloud Build の SUCCESS ログへ遷移。「revision 00012」が稼働開始。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">「CI/CD = 信頼ソースの継続的改善」の図式を1画面で完結させる。DevOps文脈最強の一手。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 9 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">09</div>
+      <div class="frame-timecode">68 — 78 sec</div>
+      <div class="frame-label">LINE Bot — 家族と共有・社会への拡張</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s9">
+        <div class="line-phone">
+          <div class="line-header">LINE &#x2022; DeepFact Bot</div>
+          <div class="line-msg">
+            <div class="line-bubble">
+              このニュース本当？<br>yahoo.co.jp/articles/...
+            </div>
+          </div>
+          <div class="line-msg" style="text-align:right;overflow:hidden;">
+            <div class="line-bubble green">
+              &#x26A0; 信頼度 20%「警告」<br>
+              煽動パターン検出<br>
+              📚 WHO ファクトチェック参照
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「Chrome だけじゃありません。LINE に URL を送るだけ——お父さんが家族のグループに怪しい記事を貼る前に、DeepFact が答えます。友達追加のみ。利用障壁ゼロ。」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">スマートフォンの LINE 画面。URL を貼り付けると「⌛分析中」→ 判定エビデンスURL付きで返信。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">「友達追加だけ・利用障壁ゼロ」の LINE Bot が既稼働中。ユーザビリティ審査基準への直接アンサー。</div>
+    </div>
+  </div>
+
+  <!-- ===== FRAME 10 ===== -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-num">10</div>
+      <div class="frame-timecode">78 — 90 sec</div>
+      <div class="frame-label">クロージング — 医師の習慣を社会の真実層へ</div>
+    </div>
+    <div class="frame-screen">
+      <div class="screen-content s10">
+        <div class="closing-tagline">
+          医師の習慣を<br>社会の真実層に。
+        </div>
+        <div class="closing-product">DeepFact Validator — 情報の Observability</div>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div class="info-row">
+        <div class="info-label">ナレーション</div>
+        <div class="info-text">「Watcher・Investigator・Validator——3つのエージェントが、あなたがネットを見ている瞬間に動いています。医師の習慣を、社会の真実層に。<span class="emphasis">DeepFact Validator。</span>」</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">画面</div>
+        <div class="info-text">暗背景にタグラインがフェードイン。Liberaiz ロゴ・Cloud Run URL・提出先（Findy/Google Cloud Japan）を表示。</div>
+      </div>
+    </div>
+    <div class="frame-emph">
+      <div class="emph-icon">POINT</div>
+      <div class="emph-text">冒頭の「医師の習慣」と呼応するクロージング。バイラル実証済みの「対比型」フレームで締める。</div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- フッター -->
+<div class="page-footer">
+  <div class="footer-left">
+    株式会社 Liberaiz — Dr. 加藤（医師・医学博士・産業医・元院長・Anthropic Certified 三冠）<br>
+    Cloud Run: https://deepfact-validator-kjciocymea-an.a.run.app&nbsp;&nbsp;|&nbsp;&nbsp;rev 00008+&nbsp;&nbsp;|&nbsp;&nbsp;提出先: DevOps × AI Agent Hackathon 2026 (Findy / Google Cloud Japan)
+  </div>
+  <div class="footer-right">LIBERAIZ · 2026-06-29</div>
+</div>
+
+</body>
+</html>

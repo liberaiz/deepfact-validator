@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepFact Validator 仕様解説書 v1.0｜株式会社Liberaiz</title>
+<style>
+  :root {
+    --paper: #F8F6F1;
+    --ink: #2A2A2A;
+    --ink-soft: #4A4A4A;
+    --rule: #C9C3B5;
+    --rule-soft: #E5E0D3;
+    --accent: #2D5A40;
+    --accent-soft: #88A395;
+    --warn: #8B3A2E;
+    --highlight: #FFF8E8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+  body {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Shippori Mincho", serif;
+    font-size: 14px; line-height: 1.85;
+    letter-spacing: 0.02em;
+  }
+  .sheet {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 52px 70px;
+  }
+  .cover { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 48px; }
+  .eyebrow {
+    font-family: "Inter", "Helvetica Neue", sans-serif;
+    font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--accent); font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .title { font-size: 28px; line-height: 1.45; font-weight: 600; margin: 0 0 12px; letter-spacing: 0.04em; }
+  .subtitle { font-size: 14px; color: var(--ink-soft); margin: 0 0 28px; line-height: 1.7; }
+  .meta {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    font-size: 11px; color: var(--ink-soft);
+    font-family: "Inter", sans-serif; letter-spacing: 0.08em;
+  }
+  .meta span strong { color: var(--ink); font-weight: 500; margin-right: 6px; }
+  h2 {
+    font-size: 18px; font-weight: 600; margin: 48px 0 16px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+    letter-spacing: 0.05em;
+  }
+  h2 .num {
+    font-family: "Inter", sans-serif; font-size: 11px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.2em;
+    display: block; margin-bottom: 4px;
+  }
+  h3 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; color: var(--accent); letter-spacing: 0.04em; }
+  p { margin: 0 0 12px; }
+  .summary {
+    background: var(--rule-soft);
+    padding: 22px 26px;
+    margin: 0 0 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .summary p { margin: 0 0 8px; font-size: 13px; }
+  .summary p:last-child { margin-bottom: 0; }
+  .summary strong { color: var(--accent); }
+  table {
+    width: 100%; border-collapse: collapse; margin: 10px 0 16px;
+    font-family: "Inter", "Hiragino Sans", sans-serif;
+    font-size: 12px;
+  }
+  th, td {
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 500; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); border-bottom: 1px solid var(--rule);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td strong { color: var(--accent); font-weight: 600; }
+  tr.total td { font-weight: 600; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--rule-soft); }
+  ul, ol { padding-left: 22px; margin: 6px 0 14px; }
+  li { margin-bottom: 4px; }
+  pre {
+    background: #FAFAF7; border: 1px solid var(--rule-soft);
+    padding: 14px 18px; font-size: 11px; font-family: "Cascadia Code", "Consolas", monospace;
+    line-height: 1.6; overflow-x: auto; margin: 12px 0;
+  }
+  code { font-family: "Cascadia Code", "Consolas", monospace; font-size: 12px; background: var(--rule-soft); padding: 1px 5px; border-radius: 3px; }
+  .callout {
+    background: var(--highlight); padding: 16px 20px; margin: 12px 0 16px;
+    border-left: 3px solid #C9A55C;
+    font-size: 13px;
+  }
+  .faq {
+    border: 1px solid var(--accent);
+    padding: 22px 26px;
+    margin: 14px 0;
+    background: #FBFAF5;
+  }
+  .faq h3 { margin-top: 0; color: var(--accent); }
+  .faq .q { font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+  .faq .a { font-size: 13px; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .domain-grid {
+    display: grid; grid-template-columns: 180px 1fr 60px;
+    gap: 0 14px; font-size: 11px; font-family: "Inter", "Hiragino Sans", sans-serif;
+    margin-bottom: 8px;
+  }
+  .domain-grid > div {
+    padding: 4px 6px; border-bottom: 1px solid var(--rule-soft);
+  }
+  .domain-grid .head { font-weight: 600; color: var(--ink-soft); font-size: 10px; letter-spacing: 0.1em; }
+  .domain-grid .score { text-align: right; font-variant-numeric: tabular-nums; color: var(--accent); }
+  footer {
+    margin-top: 48px; padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-size: 10px; color: var(--ink-soft); letter-spacing: 0.08em;
+    display: flex; justify-content: space-between;
+  }
+  @media print {
+    .sheet { padding: 22mm 18mm; max-width: none; }
+    h2 { page-break-after: avoid; }
+    table, .faq, .callout { page-break-inside: avoid; }
+    body { font-size: 10pt; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="cover">
+  <div class="eyebrow">Technical Specification · DevOps × AI Agent Hackathon 2026</div>
+  <h1 class="title">DeepFact Validator<br>仕様解説書 v1.0</h1>
+  <p class="subtitle">情報のObservabilityを社会に実装するマルチエージェントAI ── システム構成・信頼度判定ロジック・運用設計の体系解説</p>
+  <div class="meta">
+    <span><strong>提出先</strong>DevOps × AI Agent Hackathon 2026（Findy／Google Cloud Japan協賛）</span>
+    <span><strong>作成</strong>株式会社Liberaiz</span>
+    <span><strong>版</strong>v1.0</span>
+    <span><strong>取得日</strong>2026年6月29日</span>
+  </div>
+</header>
+
+<div class="summary">
+  <p><strong>プロダクト概要</strong>　DeepFact Validator は、ユーザーがネットを見ている瞬間に AI エージェントが情報の信頼度と利害関係をリアルタイム可視化するマルチエージェント・ブラウザ拡張です。医師である創業者の「真偽判断は一次情報まで遡る」習慣を AI で社会全体に拡張します。</p>
+  <p><strong>技術スタック</strong>　Vertex AI Gemini 2.5-flash／FastAPI／Cloud Run／Firestore／LINE Bot／Chrome Extension（Manifest V3）。決定化は seed=42（ベストエフォート）+ Firestore キャッシュ二層で同一入力の出力を再現保証（初回 ≠ 2回目の可能性 0 ではない・キャッシュ HIT 時は完全一致）。</p>
+  <p><strong>本書の目的</strong>　審査員が技術的詳細を確認できる体系資料。特に「信頼ドメイン辞書（125件）」と「Yahoo等の配信プラットフォーム未登録の根拠」を FAQ で明示します。</p>
+</div>
+
+<h2><span class="num">SECTION 01</span>解決する課題と背景</h2>
+<p>誤情報・誇張広告・陰謀論型フェイクが医療領域に流入する現状で、ユーザーが疑問を持つ前に AI エージェントが能動介入し、信頼度スコア・構造観察・公的機関ソース URL を提供することで、医師の「一次情報まで辿る」習慣を社会全体に拡張します。</p>
+
+<h3>「素の Gemini で代替不可」5基準</h3>
+<ol>
+  <li><strong>状態継続</strong>：発信源の過去ポジショントーク蓄積</li>
+  <li><strong>外部連携</strong>：複数ニュースAPI／SNS／論文DB／利害関係DB</li>
+  <li><strong>専門深さ</strong>：一次情報追跡＋利害関係分析</li>
+  <li><strong>HITL</strong>：ユーザーが警告を見て判断</li>
+  <li><strong>業務自動化</strong>：常時監視→診断→アラート→警告履歴蓄積</li>
+</ol>
+
+<h2><span class="num">SECTION 02</span>DevOps × AI Agent ストーリー</h2>
+<table>
+  <thead><tr><th>DevOps文脈</th><th>本プロダクトの実装</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Observability</strong></td><td>Cloud Logging／Monitoring で「ユーザーが見た情報履歴」を SRE的に蓄積・可視化・アラート</td></tr>
+    <tr><td><strong>CI/CD</strong></td><td>信頼ソース ホワイトリストを Git 管理・差分監視・ベクトルDB 自動再 deploy</td></tr>
+    <tr><td><strong>SRE</strong></td><td>「真実のSREエージェント」コンセプト・情報の障害（誤情報）を予兆検知</td></tr>
+    <tr><td><strong>Postmortem</strong></td><td>誤情報に騙された後の「警告履歴」を Postmortem 形式で記録・再発防止</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">SECTION 03</span>マルチエージェント構成</h2>
+<pre>入力（URL / テキスト / LINE / Chrome Extension）
+   ↓
+[Watcher Agent]      記事抽出・主張抽出・感情強度・出典URL
+   ↓
+[Investigator Agent] 125ドメイン信頼辞書 × Vertex AI Gemini で
+                     論調バイアス／事実整合性／対立見解
+   ↓
+[Validator Agent]    数値統合 + 自然言語の構造観察レポート生成
+   ↓
+出力（信頼度スコア + 構造観察 + 公的機関ソースURL）</pre>
+
+<p>全エージェント: <strong>Vertex AI Gemini 2.5-flash</strong> × <code>temperature=0.0 + seed=42 + top_k=1</code>（ベストエフォート）+ <strong>Firestore キャッシュ二層</strong>により同一入力の出力を再現保証（Gemini seed=42 はベストエフォート・初回 ≠ 2回目の可能性 0 ではない・キャッシュ HIT 時は完全一致）。実機検証では同一入力×3回で完全一致（コンテストデモ事故ゼロ・決定化検証 PASS）。</p>
+
+<h3>3つの利用エントリ</h3>
+<ol>
+  <li><strong>LINE Bot</strong>：友達追加だけで URL/テキスト送信 → 信頼度＋判定エビデンスURL を 🚨/⚠️/〽️/✅ アイコン付きで即返信</li>
+  <li><strong>Chrome Extension（Manifest V3）</strong>：閲覧中ページに常時介入・DOMオーバーレイで信頼度メーターと構造観察を表示</li>
+  <li><strong>Web UI Workbench</strong>：3エージェントの判定を一画面で精査するダッシュボード</li>
+</ol>
+
+<h2><span class="num">SECTION 04</span>信頼度スコアリングロジック</h2>
+<p>最終的な信頼度スコアは以下3軸の加重平均で算出されます（具体重み付けは内部仕様）：</p>
+<table>
+  <thead><tr><th>軸</th><th>範囲</th><th>判定根拠</th></tr></thead>
+  <tbody>
+    <tr><td><code>source_credibility_score</code>（発信元信頼度）</td><td>0.20-0.95</td><td>125ドメイン信頼辞書の照合結果</td></tr>
+    <tr><td><code>position_bias_score</code>（中立性）</td><td>0.00-1.00</td><td>Vertex AI Gemini が論調バイアスを評価</td></tr>
+    <tr><td><code>fact_consistency_score</code>（事実整合性）</td><td>0.00-1.00</td><td>第三者ソース照合 + 内的整合性判定</td></tr>
+  </tbody>
+</table>
+
+<h3>ラベル分類</h3>
+<table>
+  <thead><tr><th>スコア帯</th><th>ラベル</th><th>アイコン</th></tr></thead>
+  <tbody>
+    <tr><td>0.80以上</td><td><strong>高</strong></td><td>✅</td></tr>
+    <tr><td>0.55-0.79</td><td><strong>中</strong></td><td>〽️</td></tr>
+    <tr><td>0.40-0.54</td><td><strong>低</strong></td><td>⚠️</td></tr>
+    <tr><td>0.40未満</td><td class="warn">警告</td><td>🚨</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">SECTION 05</span>信頼ドメイン辞書（125件）</h2>
+<p>発信元 URL のドメインを以下の辞書で照合します。サブドメインは <code>"." + 親ドメイン</code> で接頭辞攻撃（例：fakewho.int → who.int）を防止する設計。</p>
+
+<h3>国際機関（信頼度 0.78-0.95）</h3>
+<p>WHO（who.int）／国連（un.org）／IMF／世界銀行／UNICEF／UNDP／UNHCR／UNESCO／OECD／ICRC／ICJ／WTO／Amnesty／Human Rights Watch</p>
+
+<h3>日本政府（0.90-0.95）</h3>
+<p>厚労省（mhlw.go.jp）／総務省／経産省／財務省／文科省／首相官邸／総務省統計局／PMDA（医薬品医療機器総合機構）／金融庁／国立感染症研究所／国立がん研究センター／国立国際医療研究センター／国立成育医療研究センター</p>
+
+<h3>米国政府（0.85-0.95）</h3>
+<p>CDC／FDA／NIH／ホワイトハウス／国務省／連邦議会／連邦最高裁</p>
+
+<h3>各国政府（0.85-0.95）</h3>
+<p>NHS UK／英国政府／EU／カナダ政府／ドイツ連邦政府</p>
+
+<h3>学術機関・データベース（0.65-0.95）</h3>
+<p>PubMed／Nature／Science／NEJM／The Lancet／Cochrane／ClinicalTrials.gov／arXiv／bioRxiv／medRxiv／JSTOR／Semantic Scholar／Google Scholar／CiNii／J-STAGE</p>
+
+<h3>日本主要報道（0.72-0.82）</h3>
+<p>NHK／朝日新聞／日経／読売／毎日／産経／時事通信／共同通信／東洋経済／ダイヤモンド／プレジデント／Newsweek 日本版／日経BP</p>
+
+<h3>国際報道（0.78-0.85）</h3>
+<p>Reuters／AP／BBC／Bloomberg／Financial Times／NYT／Washington Post／WSJ／The Guardian／NPR／PBS／ABC オーストラリア／Deutsche Welle</p>
+
+<h3>ファクトチェック団体（IFCN加盟＋日本系・0.78-0.92）</h3>
+<p>日本ファクトチェックセンター JFC／FIJ／FactCheck.org／Snopes／PolitiFact／Full Fact UK／AFP Fact Check／Reuters Fact Check／Lead Stories／Factly India／MediaWise Poynter</p>
+
+<h3>専門団体・データプロバイダ（0.85）</h3>
+<p>帝国データバンク／東京商工リサーチ／日本医師会／Mayo Clinic</p>
+
+<h3>オープン情報</h3>
+<p>Wikipedia（0.65・noise filter 47キーワードで誤ヒット記事除外）</p>
+
+<h3>既知信頼性問題媒体（プロパガンダ判定・0.20-0.45）</h3>
+<p>TASS（ロシア国営）／RT／Sputnik／RIA／環球時報（中国国営）／新華社／人民日報／Press TV（イラン国営）／朝鮮中央通信</p>
+
+<h2><span class="num">SECTION 06</span>FAQ：頻出する疑問への回答</h2>
+
+<div class="faq">
+  <h3>Q1. なぜ Yahoo!ニュース（news.yahoo.co.jp）は「未登録」になるのか？</h3>
+  <div class="a">
+    <p>Yahoo!ニュース は<strong>ニュース配信プラットフォーム</strong>で、記事の元出典は各新聞社・通信社からの転載です。配信元の信頼度を直接保証する仕組みがないため、辞書には意図的に登録していません。</p>
+    <p><strong>判定ロジック</strong>（<code>_classify_source</code> 関数）：</p>
+    <ol>
+      <li>ドメインが TRUSTED_DOMAINS に登録 → そのスコア返却</li>
+      <li>サブドメインが信頼ドメインの一部 → 親ドメインのスコア</li>
+      <li>それ以外 → 「未登録」スコア 0.50・カテゴリ unknown</li>
+    </ol>
+    <p>これは「Yahoo を疑っている」のではなく、「Yahoo は配信プラットフォームなので、元配信元（朝日／読売／共同等）に辿ってから判定するのが正確」という設計判断です。同様に SmartNews／NewsPicks／Gunosy／Google News／MSN ニュース等も配信プラットフォームとして未登録扱いです。</p>
+    <p><strong>v1.1.3で実装済</strong>：配信プラットフォーム検出時に HTML から元配信元を抽出（<code>&lt;meta property="article:publisher"&gt;</code>／JSON-LD <code>publisher.name</code>／Yahoo固有「提供：朝日新聞デジタル」テキスト等）し、TRUSTED_DOMAINS で再判定。表示例：「Yahoo!ニュース 経由／元配信元: 朝日新聞（信頼度 0.75）」（投稿時 v1.1.4 稼働中）</p>
+  </div>
+</div>
+
+<div class="faq">
+  <h3>Q2. 信頼度スコアはどう算出している？</h3>
+  <div class="a">
+    <p>3軸（発信元信頼度 / 中立性 / 事実整合性）を加重平均。プロパガンダパターン検出時は煽動キーワード辞書（5カテゴリ×143キーワード）で減点。第三者ソース照合（Google Fact Check Tools + Wikipedia）の結果も加味。</p>
+  </div>
+</div>
+
+<div class="faq">
+  <h3>Q3. 同じ記事を分析すると毎回違うスコアが出るのでは？</h3>
+  <div class="a">
+    <p>Vertex AI Gemini の <code>seed=42</code>（ベストエフォート・初回 ≠ 2回目の可能性 0 ではない）に加え、<strong>Firestore キャッシュ二層</strong>で同一入力ハッシュをキー化して結果を保存。キャッシュ HIT 時は完全一致を保証し、実機検証では同一入力×3回で完全一致を実証（コンテストデモ事故ゼロ）。</p>
+  </div>
+</div>
+
+<div class="faq">
+  <h3>Q4. 個人ジャーナリストや特定企業を攻撃したりしないか？</h3>
+  <div class="a">
+    <p>Brand Soul 原則「個人・組織への断定攻撃を避け、情報構造を可視化する」を全レポートに常設。「○○という構造」「○○の傾向」形式のみで提示し、政治的・宗教的に微妙な主張は「複数の立場が成り立つ構造」を contrarian_views で提示します。</p>
+  </div>
+</div>
+
+<div class="faq">
+  <h3>Q5. プロンプトインジェクション対策は？</h3>
+  <div class="a">
+    <p>Watcher / Investigator / Validator の各エージェントで入力テキストをサニタイズ。Gemini への指示文（システムプロンプト）と入力テキスト（ユーザー部分）を構造的に分離。さらに信頼ドメイン辞書のサブドメイン照合で <code>fakewho.int</code> のような接頭辞攻撃を防止（<code>domain.endswith("." + trusted_root)</code> 形式）。</p>
+  </div>
+</div>
+
+<h2><span class="num">SECTION 07</span>第三者ソース能動取得</h2>
+<p>誇張広告・陰謀論・フェイク主張を検出すると、以下を能動的に取得して上位表示：</p>
+<ul>
+  <li><strong>Google Fact Check Tools API</strong>（IFCN 加盟ファクトチェック団体・ja+en 並列叩き）</li>
+  <li><strong>Wikipedia REST API</strong>（無料・登録不要・ja+en 並列・47キーワード noise filter）</li>
+  <li><strong>公的機関ソース 上位常時挿入</strong>：厚労省／PMDA／WHO／CDC／総務省／JFC／Snopes／PolitiFact／FullFact／Reuters Fact Check／AFP Fact Check</li>
+</ul>
+<p>全体 15秒 timeout + httpx 5秒 + retry 1回で本番運用適格。「Wikipedia オンリー」構造を完全排除し、公的機関の直接URLを優先表示。</p>
+
+<h2><span class="num">SECTION 08</span>実機検証結果（v0.3）</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>入力パターン</th><th class="num">信頼度</th><th>ラベル</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>フェイク主張（証拠なきジェノサイド）</td><td class="num">20%</td><td class="warn">警告</td></tr>
+    <tr><td>2</td><td>厚労省 一次情報URL</td><td class="num">98%</td><td><strong>高</strong></td></tr>
+    <tr><td>3</td><td>中立報道風（賛否両論）</td><td class="num">59%</td><td>中</td></tr>
+    <tr><td>4</td><td>誇張広告（3日でガン消失）</td><td class="num">20%</td><td class="warn">警告</td></tr>
+    <tr><td>5</td><td>ワクチンフェイク（陰謀論型）</td><td class="num">25%</td><td class="warn">警告</td></tr>
+    <tr><td>6</td><td>学術的論調（系統的レビュー言及）</td><td class="num">59%</td><td>中</td></tr>
+  </tbody>
+</table>
+<div class="callout">
+  <strong>結果</strong>　98% vs 20% = <strong>78ポイント振れ幅</strong>（入力依存性完全確認）。同一入力×3回で完全一致（決定化検証 PASS・コンテストデモ事故ゼロ）。
+</div>
+
+<h2><span class="num">SECTION 09</span>既存サービスとの差別化</h2>
+<table>
+  <thead><tr><th>既存</th><th>何ができる</th><th>DeepFact Validator</th><th>差分</th></tr></thead>
+  <tbody>
+    <tr><td>NewsGuard</td><td>信頼度スコア（人手評価）</td><td>+ AI Agent 能動介入</td><td>静的 → 動的</td></tr>
+    <tr><td>Ground News</td><td>複数視点並列表示</td><td>+ 利害関係グラフ可視化</td><td>並べる → 関係性で診る</td></tr>
+    <tr><td>AllSides</td><td>左右ラベル</td><td>+ ユーザー文脈パーソナライズ</td><td>一律 → 個別</td></tr>
+    <tr><td>ChatGPT / Gemini</td><td>質問→回答</td><td>+ 質問前に能動介入</td><td>受動 → 能動</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">SECTION 10</span>法的リスク対策（Brand Soul「品格」継承）</h2>
+<p>「人を攻撃しない・構造を可視化する」原則を全レポートに常設：</p>
+<ul>
+  <li><strong>禁則表現</strong>：「このジャーナリストは○○から金もらってる」「この記事は嘘」「個人を断定攻撃」</li>
+  <li><strong>推奨表現</strong>：「この記事の出所と過去発言には XX という構造的関係がある」「一次情報と比較すると○○の点で論調が異なる」</li>
+  <li><strong>政治的・宗教的に微妙な主張</strong>：「複数の立場が成り立つ構造」を <code>contrarian_views</code> で提示</li>
+</ul>
+
+<h2><span class="num">SECTION 11</span>今後の改善計画（v1.1+）</h2>
+<table>
+  <thead><tr><th>機能</th><th>内容</th><th>優先度</th></tr></thead>
+  <tbody>
+    <tr><td><strong>元配信元抽出（実装済・v1.1.3稼働中）</strong></td><td>Yahoo!ニュースに限らず、<strong>配信プラットフォーム全般</strong>（SmartNews／NewsPicks／Gunosy／Google News／MSN ニュース等）の検出時、HTML から元配信元を抽出して TRUSTED_DOMAINS で再判定。「配信プラットフォーム → 未登録」の盲点を構造的に解消（FAQ Q1 参照）</td><td>実装済</td></tr>
+    <tr><td>ジャーナリスト発言履歴DB</td><td>個別ライターの過去ポジショントークを Firestore で蓄積・参照</td><td>中</td></tr>
+    <tr><td>メディア×スポンサー関係グラフ</td><td>利害関係を可視化するインタラクティブグラフ</td><td>中</td></tr>
+    <tr><td>Vertex AI Vector Search 移行</td><td>類似主張照合を Firestore + cosine から本番 Vector Search index へ</td><td>低</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">APPENDIX</span>出典・参照URL</h2>
+<ul style="font-size: 11px;">
+  <li><strong>デプロイ済 URL</strong>: <code>https://deepfact-validator-kjciocymea-an.a.run.app</code></li>
+  <li><strong>Cloud Run リビジョン</strong>: deepfact-validator-00043-4gj（v1.1.4 系列・最新は <code>/health</code> で動的確認可）</li>
+  <li><strong>ソースコード</strong>: <code>marketing/hackathon-2026/deepfact-validator/src/</code></li>
+  <li><strong>Chrome Extension</strong>: <code>marketing/hackathon-2026/deepfact-validator/extension/</code>（Manifest V3）</li>
+  <li><strong>関連ドキュメント</strong>: README.md／submission/1pager.md／submission/proto-pedia-overview.md／submission/SUBMISSION-CHECKLIST.md</li>
+</ul>
+
+<footer>
+  <span>Liberaiz Inc. ── DevOps × AI Agent Hackathon 2026 提出資料</span>
+  <span>2026.06.29 ── v1.0</span>
+</footer>
+
+</div>
+</body>
+</html>

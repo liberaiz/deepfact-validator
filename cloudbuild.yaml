@@ -1,0 +1,40 @@
+# Cloud Build — DeepFact Validator Cloud Run デプロイ
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/deepfact-validator/deepfact-validator:$BUILD_ID'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/deepfact-validator/deepfact-validator:latest'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/deepfact-validator/deepfact-validator'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'deepfact-validator'
+      - '--image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/deepfact-validator/deepfact-validator:$BUILD_ID'
+      - '--region=asia-northeast1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--min-instances=1'
+      - '--max-instances=10'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--timeout=300'
+      - '--set-env-vars=APP_ENV=production,LOG_LEVEL=INFO,GEMINI_MODEL=gemini-2.5-flash,USE_VERTEX_AI=true,VERTEX_PROJECT=$PROJECT_ID,VERTEX_LOCATION=asia-northeast1'
+      - '--set-secrets=GEMINI_API_KEY=DEEPFACT_GEMINI_API_KEY:latest,LINE_CHANNEL_ACCESS_TOKEN=DEEPFACT_LINE_CHANNEL_ACCESS_TOKEN:latest,LINE_CHANNEL_SECRET=DEEPFACT_LINE_CHANNEL_SECRET:latest,GOOGLE_FACT_CHECK_API_KEY=DEEPFACT_GOOGLE_FACT_CHECK_API_KEY:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

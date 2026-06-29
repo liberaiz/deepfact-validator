@@ -1,0 +1,135 @@
+# DeepFact Validator — Cloud Monitoring アラートポリシー定義
+#
+# 前提:
+#   - `log-based-metrics.yaml` のメトリクスが先に登録済みであること
+#   - 通知チャネル ID は環境変数 NOTIFICATION_CHANNEL に設定済みであること
+#
+# 命名規則: deepfact-<symptom>-alert
+#
+# 「動くスクショ」観点:
+#   Cloud Monitoring → Alerting → Policies に並ぶこと自体が成果物。
+#   pitch で「閾値超過 → アラート」のスクショを撮るために必要。
+
+policies:
+
+  # ---------------------------------------------------------------
+  # 1. 元配信元抽出失敗率 (unknown rate) > 30% で 5分継続
+  # ---------------------------------------------------------------
+  - display_name: deepfact-unknown-rate-high
+    documentation:
+      content: |
+        Watcher が元配信元を抽出できない割合が 30% を超えています。
+        v1.2 改善ターゲット (50%→90%) の劣化検知用。
+
+        対応:
+        1. Logs Explorer で event=watcher_result extraction_success=false を絞る
+        2. publisher_hint が空 / 配信プラットフォーム未登録のサンプルを抽出
+        3. src/agents/watcher_agent.py の RELAY_PLATFORMS / 抽出ロジックを更新
+      mime_type: text/markdown
+    conditions:
+      - display_name: unknown_rate above 30%
+        condition_threshold:
+          # Cloud Monitoring 上でメトリクス比率 = unknown / total を作る式：
+          # MQL/PromQL/threshold ベースのどれを使うかはデプロイ時に決定。
+          # 下記は ratio_filter 形式の擬似指定 (deploy-monitoring.sh が JSON 変換)。
+          numerator_filter: 'metric.type="logging.googleapis.com/user/deepfact_unknown_rate"'
+          denominator_filter: 'metric.type="logging.googleapis.com/user/deepfact_watcher_result_count"'
+          comparison: COMPARISON_GT
+          threshold_value: 0.30
+          duration: 300s
+          aggregations:
+            - alignment_period: 60s
+              per_series_aligner: ALIGN_RATE
+    combiner: OR
+    severity: WARNING
+    enabled: true
+
+  # ---------------------------------------------------------------
+  # 2. error_rate > 5% で 1分継続
+  # ---------------------------------------------------------------
+  - display_name: deepfact-error-rate-high
+    documentation:
+      content: |
+        ERROR severity 比率が 5% を超えました。
+
+        対応:
+        1. Logs Explorer で severity=ERROR を絞る
+        2. jsonPayload.stage で発生箇所を特定
+        3. exception スタックトレースで原因切り分け
+      mime_type: text/markdown
+    conditions:
+      - display_name: error_rate above 5%
+        condition_threshold:
+          numerator_filter: 'metric.type="logging.googleapis.com/user/deepfact_error_count"'
+          denominator_filter: 'metric.type="logging.googleapis.com/user/deepfact_analyze_request_count"'
+          comparison: COMPARISON_GT
+          threshold_value: 0.05
+          duration: 60s
+          aggregations:
+            - alignment_period: 60s
+              per_series_aligner: ALIGN_RATE
+    combiner: OR
+    severity: ERROR
+    enabled: true
+
+  # ---------------------------------------------------------------
+  # 3. P95 latency > 10s で 5分継続
+  # ---------------------------------------------------------------
+  - display_name: deepfact-p95-latency-high
+    documentation:
+      content: |
+        パイプライン P95 レイテンシが 10 秒を超えました。
+        Gemini API / Vertex AI のレスポンス劣化、もしくは Cloud Run cold start。
+
+        対応:
+        1. Cloud Run minimum instances を 1 に引き上げる (cold start 抑止)
+        2. Gemini API status を確認
+        3. agents 内のリトライ/timeout を再点検
+      mime_type: text/markdown
+    conditions:
+      - display_name: p95 latency above 10000ms
+        condition_threshold:
+          filter: 'metric.type="logging.googleapis.com/user/deepfact_pipeline_latency_ms"'
+          comparison: COMPARISON_GT
+          threshold_value: 10000
+          duration: 300s
+          aggregations:
+            - alignment_period: 60s
+              per_series_aligner: ALIGN_PERCENTILE_95
+    combiner: OR
+    severity: WARNING
+    enabled: true
+
+  # ---------------------------------------------------------------
+  # 4. low_credibility 比率の急騰 (検知用・ハッカソンデモ映え狙い)
+  # ---------------------------------------------------------------
+  - display_name: deepfact-low-credibility-spike
+    documentation:
+      content: |
+        信頼度低 (< 0.5) と判定された記事比率が 60% を超えました。
+        メディアエコシステム側の劣化 or 攻撃的入力の急増を検知。
+
+        対応:
+        1. Logs Explorer で event=validator_result overall_score<0.5 の上位ドメインを集計
+        2. 同じドメインから連続入力されているか確認 (Rate Limit 設定見直し)
+      mime_type: text/markdown
+    conditions:
+      - display_name: low_credibility_rate above 60%
+        condition_threshold:
+          numerator_filter: 'metric.type="logging.googleapis.com/user/deepfact_low_credibility_rate"'
+          denominator_filter: 'metric.type="logging.googleapis.com/user/deepfact_analyze_request_count"'
+          comparison: COMPARISON_GT
+          threshold_value: 0.60
+          duration: 600s
+          aggregations:
+            - alignment_period: 60s
+              per_series_aligner: ALIGN_RATE
+    combiner: OR
+    severity: INFO
+    enabled: true
+
+# ---------------------------------------------------------------
+# 通知チャネル (deploy-monitoring.sh が env $NOTIFICATION_CHANNEL を解決して埋める)
+# ---------------------------------------------------------------
+notification_channels:
+  - "${NOTIFICATION_CHANNEL}"  # 例: projects/PROJECT_ID/notificationChannels/123

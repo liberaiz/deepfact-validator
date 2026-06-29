@@ -1,0 +1,150 @@
+# DeepFact Validator — Cloud Monitoring ログベースメトリクス定義
+#
+# このファイルは `scripts/deploy-monitoring.sh` から読み込まれ、
+# `gcloud logging metrics create` で Cloud Monitoring に登録される。
+#
+# 構造化ログ仕様: src/observability.py の log_event() が
+# jsonPayload.event = "<event_name>" を必ず付与する前提で書かれている。
+#
+# 命名規則: deepfact_<観点>_<集計種別>
+# - rate    : 1分間の比率 (0.0-1.0)
+# - latency : ミリ秒
+# - count   : 件数
+#
+# Cloud Console UI: Cloud Logging → Logs-based Metrics に表示される
+
+metrics:
+
+  # ---------------------------------------------------------------
+  # 1. unknown_rate: 元配信元抽出失敗率
+  # ---------------------------------------------------------------
+  - name: deepfact_unknown_rate
+    description: >
+      Watcher が元配信元 (original_publisher) を抽出できなかった比率。
+      Yahoo!ニュース等の配信プラットフォーム経由で「未登録」扱いになる
+      ケースを構造的に検知する (v1.2 改善ターゲット指標)。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="watcher_result"
+      jsonPayload.extraction_success=false
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+    labels:
+      - key: input_type
+        value_type: STRING
+        description: url / text / dom
+
+  # ---------------------------------------------------------------
+  # 2. low_credibility_rate: 信頼度低 (< 0.5) 比率
+  # ---------------------------------------------------------------
+  - name: deepfact_low_credibility_rate
+    description: >
+      Validator が overall_score < 0.5 と判定した記事の件数。
+      WARNING 比率の変化はメディアエコシステムの劣化指標。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="validator_result"
+      jsonPayload.overall_score<0.5
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+    labels:
+      - key: overall_label
+        value_type: STRING
+        description: 高 / 中 / 低 / 警告
+
+  # ---------------------------------------------------------------
+  # 3. cache_hit_rate: Firestore キャッシュ HIT 率
+  # ---------------------------------------------------------------
+  - name: deepfact_cache_hit_count
+    description: >
+      Firestore 入力ハッシュキャッシュが HIT した回数。
+      cache_miss と組み合わせて HIT 率 = hit / (hit + miss) を Monitoring 側で算出。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="cache_hit"
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+
+  - name: deepfact_cache_miss_count
+    description: >
+      Firestore 入力ハッシュキャッシュが MISS した回数。
+      cache_hit_count とペアで HIT 率を算出する分母。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="cache_miss"
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+
+  # ---------------------------------------------------------------
+  # 4. p95_latency: validator_result の elapsed_ms 分布
+  # ---------------------------------------------------------------
+  - name: deepfact_pipeline_latency_ms
+    description: >
+      Watcher → Investigator → Validator パイプライン全体の経過 ms。
+      Cloud Monitoring 側で P50/P95/P99 を集計し、レイテンシ劣化を検知。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="validator_result"
+    metric_kind: DELTA
+    value_type: DISTRIBUTION
+    unit: "ms"
+    value_extractor: "EXTRACT(jsonPayload.elapsed_ms)"
+    bucket_options:
+      exponential_buckets:
+        num_finite_buckets: 64
+        growth_factor: 1.4
+        scale: 100  # 100ms 起点 → P95 〜10s 帯までカバー
+
+  # ---------------------------------------------------------------
+  # 5. error_rate: ERROR severity 件数 (5xx 相当)
+  # ---------------------------------------------------------------
+  - name: deepfact_error_count
+    description: >
+      severity=ERROR で出力された全イベント件数。
+      error_rate = error_count / analyze_request_count を Monitoring 側で算出。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      severity="ERROR"
+      jsonPayload.event=~"^(error|validator_result|watcher_result|investigator_result)$"
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+    labels:
+      - key: stage
+        value_type: STRING
+        description: cache_lookup / record_warning / save_article / save_cached_response 等
+
+  # ---------------------------------------------------------------
+  # 補助メトリクス (分母として使用)
+  # ---------------------------------------------------------------
+  - name: deepfact_analyze_request_count
+    description: >
+      /api/analyze の総リクエスト数 (rate 計算の分母)。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="analyze_request"
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"
+
+  - name: deepfact_watcher_result_count
+    description: >
+      watcher_result イベント総数 (unknown_rate 計算の分母)。
+    filter: |
+      resource.type="cloud_run_revision"
+      resource.labels.service_name="deepfact-validator"
+      jsonPayload.event="watcher_result"
+    metric_kind: DELTA
+    value_type: INT64
+    unit: "1"

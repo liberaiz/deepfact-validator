@@ -1,0 +1,100 @@
+name: validate-trust-sources
+
+# Validates trust dictionaries on PR and auto-deploys to Cloud Run on
+# merge to main. See README "CI/CD Pipeline" section.
+
+on:
+  pull_request:
+    paths:
+      - "marketing/hackathon-2026/deepfact-validator/config/**"
+      - "marketing/hackathon-2026/deepfact-validator/scripts/validate-trust-sources.py"
+      - "marketing/hackathon-2026/deepfact-validator/.github/workflows/validate-trust-sources.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "marketing/hackathon-2026/deepfact-validator/**"
+  workflow_dispatch: {}
+
+# Cancel duplicate runs on the same PR / branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_DIR: marketing/hackathon-2026/deepfact-validator
+
+jobs:
+  validate:
+    name: Validate YAML schema, ranges, duplicates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (PyYAML + yamllint)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml yamllint
+
+      - name: yamllint config/
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          yamllint -d '{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable, comments: {min-spaces-from-content: 1}}}' config/
+
+      - name: Validate trust-source YAML (schema + ranges + duplicates)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: python scripts/validate-trust-sources.py
+
+      - name: Smoke test — agents load YAML successfully
+        working-directory: ${{ env.PROJECT_DIR }}
+        env:
+          # Make sure src.config etc. can import without real secrets
+          APP_ENV: test
+          GEMINI_API_KEY: dummy-key-for-import
+          LINE_CHANNEL_ACCESS_TOKEN: dummy
+          LINE_CHANNEL_SECRET: dummy
+          GOOGLE_FACT_CHECK_API_KEY: dummy
+        run: |
+          pip install -r requirements.txt
+          python scripts/test-yaml-load.py
+
+  deploy:
+    name: Cloud Build deploy → Cloud Run
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write   # for Workload Identity Federation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Cloud Build submit (build → push → Cloud Run deploy)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          gcloud builds submit \
+            --config=cloudbuild.yaml \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --substitutions="_DEPLOYED_BY=github-actions,_GIT_SHA=${GITHUB_SHA}" \
+            .

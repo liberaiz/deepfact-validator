@@ -1,0 +1,545 @@
+# DeepFact Validator — 信頼ソース辞書
+# Source of truth for source-credibility scoring. Loaded at app start by investigator_agent.
+# Schema validated by scripts/validate-trust-sources.py in CI (PR + main push).
+#
+# Editing rules:
+#   - credibility ∈ [0.0, 1.0]
+#   - category must be one of the enum below
+#   - domain must be unique
+#   - For sub-domain matching, register the registrable root (e.g. "nature.com" matches "www.nature.com")
+version: "1.0"
+last_updated: "2026-06-29"
+# Known categories (enum, validated):
+categories:
+  - academic
+  - academic_jp
+  - data_provider
+  - encyclopedia
+  - fact_check
+  - government
+  - government_jp
+  - government_us
+  - international
+  - international_media
+  - major_media_jp
+  - professional_body
+  - state_propaganda
+
+domains:
+  # --- 国際機関 ---
+  - domain: "who.int"
+    name: "WHO 世界保健機関"
+    credibility: 0.95
+    category: international
+  - domain: "un.org"
+    name: "国連"
+    credibility: 0.95
+    category: international
+  - domain: "imf.org"
+    name: "IMF 国際通貨基金"
+    credibility: 0.92
+    category: international
+  - domain: "worldbank.org"
+    name: "世界銀行"
+    credibility: 0.92
+    category: international
+  # --- 日本政府 ---
+  - domain: "mhlw.go.jp"
+    name: "厚生労働省"
+    credibility: 0.95
+    category: government_jp
+  - domain: "soumu.go.jp"
+    name: "総務省"
+    credibility: 0.95
+    category: government_jp
+  - domain: "meti.go.jp"
+    name: "経済産業省"
+    credibility: 0.95
+    category: government_jp
+  - domain: "mof.go.jp"
+    name: "財務省"
+    credibility: 0.95
+    category: government_jp
+  - domain: "mext.go.jp"
+    name: "文部科学省"
+    credibility: 0.95
+    category: government_jp
+  - domain: "kantei.go.jp"
+    name: "首相官邸"
+    credibility: 0.93
+    category: government_jp
+  - domain: "stat.go.jp"
+    name: "総務省統計局"
+    credibility: 0.95
+    category: government_jp
+  - domain: "pmda.go.jp"
+    name: "PMDA 医薬品医療機器総合機構"
+    credibility: 0.95
+    category: government_jp
+  - domain: "fsa.go.jp"
+    name: "金融庁"
+    credibility: 0.94
+    category: government_jp
+  - domain: "go.jp"
+    name: "日本政府機関"
+    credibility: 0.90
+    category: government_jp
+  # --- 学術 ---
+  - domain: "pubmed.ncbi.nlm.nih.gov"
+    name: "PubMed"
+    credibility: 0.95
+    category: academic
+  - domain: "nature.com"
+    name: "Nature"
+    credibility: 0.92
+    category: academic
+  - domain: "science.org"
+    name: "Science"
+    credibility: 0.92
+    category: academic
+  - domain: "nejm.org"
+    name: "NEJM 新英国医学誌"
+    credibility: 0.94
+    category: academic
+  - domain: "thelancet.com"
+    name: "The Lancet"
+    credibility: 0.93
+    category: academic
+  - domain: "cinii.ac.jp"
+    name: "CiNii 日本論文DB"
+    credibility: 0.90
+    category: academic
+  - domain: "ac.jp"
+    name: "日本学術機関"
+    credibility: 0.85
+    category: academic_jp
+  # --- 公的データ ---
+  - domain: "tdb.co.jp"
+    name: "帝国データバンク"
+    credibility: 0.85
+    category: data_provider
+  - domain: "tsr-net.co.jp"
+    name: "東京商工リサーチ"
+    credibility: 0.85
+    category: data_provider
+  - domain: "med.or.jp"
+    name: "日本医師会"
+    credibility: 0.85
+    category: professional_body
+  # --- 主要報道 ---
+  - domain: "nhk.or.jp"
+    name: "NHK"
+    credibility: 0.80
+    category: major_media_jp
+  - domain: "asahi.com"
+    name: "朝日新聞"
+    credibility: 0.75
+    category: major_media_jp
+  - domain: "nikkei.com"
+    name: "日本経済新聞"
+    credibility: 0.80
+    category: major_media_jp
+  - domain: "yomiuri.co.jp"
+    name: "読売新聞"
+    credibility: 0.75
+    category: major_media_jp
+  - domain: "mainichi.jp"
+    name: "毎日新聞"
+    credibility: 0.75
+    category: major_media_jp
+  - domain: "sankei.com"
+    name: "産経新聞"
+    credibility: 0.72
+    category: major_media_jp
+  - domain: "reuters.com"
+    name: "Reuters"
+    credibility: 0.85
+    category: international_media
+  - domain: "ap.org"
+    name: "AP通信"
+    credibility: 0.85
+    category: international_media
+  - domain: "bbc.com"
+    name: "BBC"
+    credibility: 0.80
+    category: international_media
+  - domain: "bloomberg.com"
+    name: "Bloomberg"
+    credibility: 0.82
+    category: international_media
+  - domain: "ft.com"
+    name: "Financial Times"
+    credibility: 0.83
+    category: international_media
+  # --- オープン情報 ---
+  - domain: "wikipedia.org"
+    name: "Wikipedia"
+    credibility: 0.65
+    category: encyclopedia
+  # --- ファクトチェック団体（IFCN 加盟 + 日本系） ---
+  - domain: "factcheckcenter.jp"
+    name: "日本ファクトチェックセンター JFC"
+    credibility: 0.90
+    category: fact_check
+  - domain: "fij.info"
+    name: "ファクトチェック・イニシアティブ FIJ"
+    credibility: 0.88
+    category: fact_check
+  - domain: "factcheck.org"
+    name: "FactCheck.org"
+    credibility: 0.92
+    category: fact_check
+  - domain: "snopes.com"
+    name: "Snopes"
+    credibility: 0.85
+    category: fact_check
+  - domain: "politifact.com"
+    name: "PolitiFact"
+    credibility: 0.85
+    category: fact_check
+  - domain: "fullfact.org"
+    name: "Full Fact UK"
+    credibility: 0.88
+    category: fact_check
+  - domain: "afp.com"
+    name: "AFP Fact Check"
+    credibility: 0.88
+    category: fact_check
+  - domain: "leadstories.com"
+    name: "Lead Stories"
+    credibility: 0.78
+    category: fact_check
+  - domain: "factly.in"
+    name: "Factly India"
+    credibility: 0.78
+    category: fact_check
+  - domain: "mediawise.poynter.org"
+    name: "MediaWise Poynter"
+    credibility: 0.85
+    category: fact_check
+  # --- 医療系（追加） ---
+  - domain: "cdc.gov"
+    name: "米国疾病予防管理センター CDC"
+    credibility: 0.95
+    category: government_us
+  - domain: "fda.gov"
+    name: "米国食品医薬品局 FDA"
+    credibility: 0.95
+    category: government_us
+  - domain: "nih.gov"
+    name: "米国国立衛生研究所 NIH"
+    credibility: 0.95
+    category: government_us
+  - domain: "ema.europa.eu"
+    name: "欧州医薬品庁 EMA"
+    credibility: 0.93
+    category: international
+  - domain: "niid.go.jp"
+    name: "国立感染症研究所"
+    credibility: 0.92
+    category: government_jp
+  - domain: "ncgm.go.jp"
+    name: "国立国際医療研究センター"
+    credibility: 0.90
+    category: government_jp
+  - domain: "ncc.go.jp"
+    name: "国立がん研究センター"
+    credibility: 0.92
+    category: government_jp
+  - domain: "ncchd.go.jp"
+    name: "国立成育医療研究センター"
+    credibility: 0.90
+    category: government_jp
+  - domain: "mayoclinic.org"
+    name: "Mayo Clinic"
+    credibility: 0.85
+    category: professional_body
+  - domain: "cochrane.org"
+    name: "Cochrane Reviews"
+    credibility: 0.95
+    category: academic
+  - domain: "clinicaltrials.gov"
+    name: "ClinicalTrials.gov"
+    credibility: 0.95
+    category: academic
+  # --- 国際機関（追加） ---
+  - domain: "unicef.org"
+    name: "UNICEF 国連児童基金"
+    credibility: 0.92
+    category: international
+  - domain: "undp.org"
+    name: "UNDP 国連開発計画"
+    credibility: 0.90
+    category: international
+  - domain: "unhcr.org"
+    name: "UNHCR 国連難民高等弁務官"
+    credibility: 0.90
+    category: international
+  - domain: "unesco.org"
+    name: "UNESCO ユネスコ"
+    credibility: 0.90
+    category: international
+  - domain: "oecd.org"
+    name: "OECD 経済協力開発機構"
+    credibility: 0.92
+    category: international
+  - domain: "icrc.org"
+    name: "赤十字国際委員会 ICRC"
+    credibility: 0.92
+    category: international
+  - domain: "amnesty.org"
+    name: "アムネスティ・インターナショナル"
+    credibility: 0.78
+    category: international
+  - domain: "hrw.org"
+    name: "Human Rights Watch"
+    credibility: 0.80
+    category: international
+  - domain: "icj-cij.org"
+    name: "国際司法裁判所 ICJ"
+    credibility: 0.95
+    category: international
+  - domain: "wto.org"
+    name: "WTO 世界貿易機関"
+    credibility: 0.92
+    category: international
+  # --- 学術 DB（追加） ---
+  - domain: "arxiv.org"
+    name: "arXiv プレプリント"
+    credibility: 0.78
+    category: academic
+  - domain: "biorxiv.org"
+    name: "bioRxiv プレプリント"
+    credibility: 0.78
+    category: academic
+  - domain: "medrxiv.org"
+    name: "medRxiv プレプリント"
+    credibility: 0.78
+    category: academic
+  - domain: "jstor.org"
+    name: "JSTOR"
+    credibility: 0.88
+    category: academic
+  - domain: "semanticscholar.org"
+    name: "Semantic Scholar"
+    credibility: 0.85
+    category: academic
+  - domain: "jstage.jst.go.jp"
+    name: "J-STAGE 日本学術論文DB"
+    credibility: 0.88
+    category: academic_jp
+  - domain: "scholar.google.com"
+    name: "Google Scholar"
+    credibility: 0.78
+    category: academic
+  # --- 各国政府（追加） ---
+  - domain: "nhs.uk"
+    name: "NHS UK 英国保健サービス"
+    credibility: 0.95
+    category: government
+  - domain: "gov.uk"
+    name: "英国政府"
+    credibility: 0.92
+    category: government
+  - domain: "europa.eu"
+    name: "欧州連合 EU"
+    credibility: 0.90
+    category: government
+  - domain: "canada.ca"
+    name: "カナダ政府"
+    credibility: 0.90
+    category: government
+  - domain: "bundesregierung.de"
+    name: "ドイツ連邦政府"
+    credibility: 0.90
+    category: government
+  - domain: "whitehouse.gov"
+    name: "米国ホワイトハウス"
+    credibility: 0.85
+    category: government_us
+  - domain: "state.gov"
+    name: "米国国務省"
+    credibility: 0.90
+    category: government_us
+  - domain: "congress.gov"
+    name: "米国議会"
+    credibility: 0.92
+    category: government_us
+  - domain: "supremecourt.gov"
+    name: "米国最高裁"
+    credibility: 0.95
+    category: government_us
+  # --- 日本専門メディア・経済・テック ---
+  - domain: "toyokeizai.net"
+    name: "東洋経済"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "diamond.jp"
+    name: "ダイヤモンド"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "president.jp"
+    name: "プレジデント"
+    credibility: 0.75
+    category: major_media_jp
+  - domain: "newsweekjapan.jp"
+    name: "Newsweek 日本版"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "nikkeibp.co.jp"
+    name: "日経BP"
+    credibility: 0.80
+    category: major_media_jp
+  - domain: "nhk.or.jp/news"
+    name: "NHK NEWS WEB"
+    credibility: 0.82
+    category: major_media_jp
+  - domain: "jiji.com"
+    name: "時事通信"
+    credibility: 0.80
+    category: major_media_jp
+  - domain: "kyodonews.jp"
+    name: "共同通信"
+    credibility: 0.80
+    category: major_media_jp
+  # --- 🆕 v1.1 テレビ局（系列含む） ---
+  - domain: "tv-asahi.co.jp"
+    name: "テレビ朝日 / ANN"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "ntv.co.jp"
+    name: "日本テレビ / NNN"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "fujitv.co.jp"
+    name: "フジテレビ / FNN"
+    credibility: 0.75
+    category: major_media_jp
+  - domain: "tbs.co.jp"
+    name: "TBSテレビ / JNN"
+    credibility: 0.78
+    category: major_media_jp
+  - domain: "tv-tokyo.co.jp"
+    name: "テレビ東京 / TXN"
+    credibility: 0.78
+    category: major_media_jp
+  # --- 🆕 v1.1 スポーツ紙・夕刊紙 ---
+  - domain: "sponichi.co.jp"
+    name: "スポーツニッポン"
+    credibility: 0.65
+    category: major_media_jp
+  - domain: "nikkansports.com"
+    name: "日刊スポーツ"
+    credibility: 0.65
+    category: major_media_jp
+  - domain: "daily.co.jp"
+    name: "デイリースポーツ"
+    credibility: 0.65
+    category: major_media_jp
+  - domain: "tokyo-sports.co.jp"
+    name: "東京スポーツ"
+    credibility: 0.55
+    category: major_media_jp
+  - domain: "zakzak.co.jp"
+    name: "夕刊フジ / ZAKZAK"
+    credibility: 0.55
+    category: major_media_jp
+  # --- 🆕 v1.1 ビジネス系メディア ---
+  - domain: "forbesjapan.com"
+    name: "Forbes JAPAN"
+    credibility: 0.72
+    category: major_media_jp
+  - domain: "businessinsider.jp"
+    name: "Business Insider Japan"
+    credibility: 0.72
+    category: major_media_jp
+  - domain: "itmedia.co.jp"
+    name: "ITmedia"
+    credibility: 0.72
+    category: major_media_jp
+  - domain: "ascii.jp"
+    name: "ASCII.jp"
+    credibility: 0.72
+    category: major_media_jp
+  - domain: "bunshun.jp"
+    name: "週刊文春"
+    credibility: 0.65
+    category: major_media_jp
+  - domain: "gendai.media"
+    name: "講談社（現代ビジネス／週刊現代）"
+    credibility: 0.65
+    category: major_media_jp
+  - domain: "dailyshincho.jp"
+    name: "デイリー新潮"
+    credibility: 0.62
+    category: major_media_jp
+  # --- 国際報道（追加） ---
+  - domain: "npr.org"
+    name: "NPR 米国公共ラジオ"
+    credibility: 0.85
+    category: international_media
+  - domain: "pbs.org"
+    name: "PBS 米国公共放送"
+    credibility: 0.85
+    category: international_media
+  - domain: "theguardian.com"
+    name: "The Guardian UK"
+    credibility: 0.78
+    category: international_media
+  - domain: "nytimes.com"
+    name: "New York Times"
+    credibility: 0.80
+    category: international_media
+  - domain: "washingtonpost.com"
+    name: "Washington Post"
+    credibility: 0.80
+    category: international_media
+  - domain: "wsj.com"
+    name: "Wall Street Journal"
+    credibility: 0.82
+    category: international_media
+  - domain: "abc.net.au"
+    name: "ABC オーストラリア"
+    credibility: 0.78
+    category: international_media
+  - domain: "dw.com"
+    name: "Deutsche Welle ドイツ"
+    credibility: 0.80
+    category: international_media
+  # --- 既知の信頼性問題が指摘される媒体 ---
+  - domain: "tass.com"
+    name: "TASS ロシア国営通信"
+    credibility: 0.40
+    category: state_propaganda
+  - domain: "rt.com"
+    name: "RT ロシア国営"
+    credibility: 0.35
+    category: state_propaganda
+  - domain: "ria.ru"
+    name: "RIA ロシア国営"
+    credibility: 0.40
+    category: state_propaganda
+  - domain: "sputniknews.com"
+    name: "Sputnik ロシア国営"
+    credibility: 0.35
+    category: state_propaganda
+  - domain: "globaltimes.cn"
+    name: "環球時報 中国国営"
+    credibility: 0.40
+    category: state_propaganda
+  - domain: "xinhuanet.com"
+    name: "新華社 中国国営"
+    credibility: 0.45
+    category: state_propaganda
+  - domain: "people.com.cn"
+    name: "人民日報 中国共産党機関紙"
+    credibility: 0.40
+    category: state_propaganda
+  - domain: "presstv.ir"
+    name: "Press TV イラン国営"
+    credibility: 0.35
+    category: state_propaganda
+  - domain: "kcna.kp"
+    name: "朝鮮中央通信 北朝鮮国営"
+    credibility: 0.20
+    category: state_propaganda

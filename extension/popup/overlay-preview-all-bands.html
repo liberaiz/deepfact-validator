@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — Overlay 4 段階プレビュー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&display=swap">
+<style>
+  html, body { margin: 0; padding: 0; background: #EFEDE5; }
+  body {
+    font-family: 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+    color: #1B2A4E;
+    padding: 28px 24px 40px;
+  }
+  .title {
+    font-family: 'Cormorant Garamond', 'Shippori Mincho B1', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+  }
+  .title-sub {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: rgba(27, 42, 78, 0.6);
+    margin-bottom: 22px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 780px);
+    gap: 28px;
+    justify-content: center;
+    align-items: start;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .col-label {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+    padding: 4px 10px;
+    border-bottom: 1px solid rgba(27, 42, 78, 0.25);
+  }
+  .col-label.high { color: #3D8A55; border-bottom-color: #3D8A55; }
+  .col-label.mid  { color: #C9A55C; border-bottom-color: #C9A55C; }
+  .col-label.low  { color: #C8453B; border-bottom-color: #C8453B; }
+  .col-label.warn { color: #C8453B; border-bottom-color: #C8453B; }
+  iframe {
+    border: none;
+    width: 780px;
+    height: 680px;
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+    background: #FFFFFF;
+  }
+</style>
+</head>
+<body>
+<h1 class="title">DeepFact Validator — Overlay (記事ページ右上に自動表示)</h1>
+<div class="title-sub">記事を開いた瞬間、AI Agent が能動介入で信頼度を可視化 / 4 段階比較</div>
+<div class="grid">
+  <div class="col">
+    <div class="col-label high">✅ 高 (92%) — 一次情報＋出典多数の記事</div>
+    <iframe src="overlay-preview-mock.html?band=high"></iframe>
+  </div>
+  <div class="col">
+    <div class="col-label mid">〽️ 中 (65%) — 体験談ベースの記事</div>
+    <iframe src="overlay-preview-mock.html?band=mid"></iframe>
+  </div>
+  <div class="col">
+    <div class="col-label low">⚠️ 低 (32%) — 感情訴求＋曖昧引用の記事</div>
+    <iframe src="overlay-preview-mock.html?band=low"></iframe>
+  </div>
+  <div class="col">
+    <div class="col-label warn">🚨 警告 (20%) — プロパガンダ構造の記事</div>
+    <iframe src="overlay-preview-mock.html?band=warn"></iframe>
+  </div>
+</div>
+</body>
+</html>

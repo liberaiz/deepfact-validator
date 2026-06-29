@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — Overlay Preview Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../content/overlay.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #FFFFFF; font-family: 'Yu Gothic', 'Hiragino Sans', sans-serif; color: #222; }
+  .fake-article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+    line-height: 1.85;
+    font-size: 15px;
+  }
+  .fake-breadcrumb { font-size: 11px; color: #888; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .fake-title {
+    font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: #1a1a1a;
+    margin: 0 0 12px;
+  }
+  .fake-meta { font-size: 11px; color: #999; margin-bottom: 28px; letter-spacing: 0.05em; }
+  .fake-lead {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.8;
+    margin-bottom: 24px;
+    color: #1a1a1a;
+  }
+  .fake-body p { margin: 0 0 18px; color: #333; }
+  .fake-hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }
+  .fake-share { font-size: 11px; color: #888; margin-top: 32px; }
+</style>
+</head>
+<body>
+<article class="fake-article">
+  <div class="fake-breadcrumb">HEALTH › TRENDING</div>
+  <h1 class="fake-title" id="article-title"></h1>
+  <div class="fake-meta" id="article-meta"></div>
+  <p class="fake-lead" id="article-lead"></p>
+  <div class="fake-body" id="article-body"></div>
+  <hr class="fake-hr">
+  <p class="fake-share">▶ 拡散希望 / シェア 5,400+ / コメント 320+</p>
+</article>
+
+<!-- DeepFact Validator overlay -->
+<div id="deepfact-overlay" style="display: block;">
+  <div class="df-head">
+    <span class="df-brand">DeepFact</span>
+    <span class="df-status">完了</span>
+    <span class="df-close" title="閉じる">×</span>
+  </div>
+  <div class="df-body">
+    <div class="df-meter-block">
+      <div class="df-meter">
+        <svg class="df-meter-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="df-meter-track" cx="50" cy="50" r="42" fill="none"></circle>
+          <circle id="meter-progress" class="df-meter-progress" cx="50" cy="50" r="42" fill="none"
+                  stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
+        </svg>
+        <div class="df-meter-center">
+          <span id="meter-label" class="df-meter-label">—</span>
+        </div>
+      </div>
+      <div class="df-score-meta">
+        <span class="df-score-meta-label">信頼度</span>
+        <span id="score-value-mini" class="df-score-value-mini">—</span>
+        <span id="score-icon" class="df-score-icon">—</span>
+      </div>
+    </div>
+    <div id="summary" class="df-summary"></div>
+    <h4 class="df-h4">構造観察</h4>
+    <ul id="obs" class="df-obs"></ul>
+    <h4 class="df-h4">一次情報候補</h4>
+    <ul id="primary" class="df-primary"></ul>
+    <h4 id="evidence-heading" class="df-h4 df-evidence-heading">判定エビデンス・ソース</h4>
+    <div id="evidence" class="df-evidence"></div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = {
+  high: {
+    pct: 92, label: "高", icon: "✅", band: "df-high",
+    article: {
+      title: "厚労省・PMDA データで見る予防接種の有効性 — 副反応率と効果の科学的根拠",
+      meta: "Medical Journal Japan | 2026.06.21 | 鈴木 拓也",
+      lead: "本記事では厚生労働省およびPMDAが公開する添付文書情報をもとに、予防接種の有効性と副反応率を整理する。",
+      body: ["WHO の公式統計によれば、ワクチン接種による死亡率低減効果は地域・年齢層によって異なるが、ガイドラインで定められた範囲内に収まっている（出典: WHO Fact Sheets）。", "ただし副作用率もゼロではなく、長期追跡データでは ◯◯% の頻度で軽度の発熱・倦怠感が報告されている（出典: PMDA 添付文書）。", "対立する論点として、特定の集団における有効率の差については別途検討が必要である。"]
+    },
+    summary: "厚生労働省・PMDA・WHO 等の一次ソースを直接引用し、定量データに出典が明示されている。論調も中立的で、対立意見への目配りも見られる。",
+    obs: ["定量データの出典 (厚労省/PMDA) が明記", "断定表現を避け、限界条件を併記", "対立する論点 (副作用率) を別段落で言及"],
+    primary: ["https://www.mhlw.go.jp/...", "https://www.pmda.go.jp/..."],
+    evidence: [
+      { rating: "正確", ratingClass: "df-rating-safe", publisher: "厚生労働省", title: "予防接種の有効性と副反応の最新エビデンス", url: "https://www.mhlw.go.jp/" },
+      { rating: "公的情報", ratingClass: "df-rating-accent", publisher: "WHO", title: "Immunization coverage — Key facts", url: "https://www.who.int/" }
+    ]
+  },
+  mid: {
+    pct: 65, label: "中", icon: "〽️", band: "df-mid",
+    article: {
+      title: "ヨガで腰痛が消えた — 50 代男性の体験談から考えるセルフケアの可能性",
+      meta: "ヘルスケアニュース | 2026.06.20 | 山田 健一",
+      lead: "腰痛に長年悩まされていた 50 代男性が、ヨガを始めて 3 ヶ月で症状が改善したという体験談を紹介する。",
+      body: ["田中さん（仮名）はデスクワーク中心の生活で 10 年以上腰痛に悩まされていた。週 2 回のヨガクラスを 3 ヶ月続けた結果、痛みがほぼ消えたという。", "「腰痛にはヨガが効く」とする論文も一部存在するが、メタアナリシスは少なく、効果はケースバイケースとする見方が一般的だ。"]
+    },
+    summary: "個別事例 (n=1) を中心に組み立てられた記事。引用ソースは存在するが、メタアナリシス・ガイドラインへの参照は薄い。「効果があった」とする方向への偏りがやや見られる。",
+    obs: ["個別ケース報告に依存 (n=1)", "効果有りの方向への語彙バイアス", "対立する研究結果への言及がない"],
+    primary: ["https://pubmed.ncbi.nlm.nih.gov/..."],
+    evidence: [
+      { rating: "一部正確", ratingClass: "df-rating-accent", publisher: "日本医師会", title: "症例報告の解釈に関する留意点", url: "https://www.med.or.jp/" }
+    ]
+  },
+  low: {
+    pct: 32, label: "低", icon: "⚠️", band: "df-low",
+    article: {
+      title: "【驚愕】医師は絶対に教えない！この食材を毎日食べるだけで血圧が劇的に下がる",
+      meta: "Wellness Tribune | 2026.06.19 | 編集部",
+      lead: "ある匿名 SNS アカウントで話題になった「医師が隠していた食材」の真相に迫る。",
+      body: ["X (旧 Twitter) のあるアカウントで「血圧が劇的に下がった」とされる食材が話題だ。研究によれば、確かに血圧降下作用は報告されているが、その効果は限定的だとも言われる（出典: PubMed・ただし文脈は異なる）。", "「医師は絶対に教えない」と書かれるが、実際には循環器学会のガイドラインで食事療法の項目で言及されている。"]
+    },
+    summary: "感情的な訴求語が頻出し、出典の多くが匿名 SNS 投稿。一部に研究論文が引用されているが、文脈と一致しない引用が見られる。",
+    obs: ["感情強度語 (驚愕・絶対・必ず) が複数回", "引用は SNS 匿名アカウント中心", "論文引用が原文の文脈と一致しない"],
+    primary: ["（信頼できる一次情報URLが不明確）"],
+    evidence: [
+      { rating: "誤解を招く", ratingClass: "df-rating-warn", publisher: "FactCheck.org", title: "Misleading citation of clinical study", url: "https://www.factcheck.org/" }
+    ]
+  },
+  warn: {
+    pct: 20, label: "警告", icon: "🚨", band: "df-warn",
+    article: {
+      title: "【拡散希望】3 日でガンが消えた！副作用ゼロの奇跡の療法 — 医師は隠している真実",
+      meta: "Truth Network | 2026.06.18 | 匿名投稿",
+      lead: "末期ガンと宣告された男性が、ある自然療法を 3 日試しただけでガンが完全に消失したという衝撃の体験を公開する。",
+      body: ["田中さん（仮名）は末期ガンで余命 3 ヶ月と宣告された。しかし、ある自然療法を 3 日間試したところ、ガンは完全に消失したという。「副作用は一切なく、絶対に効きます」と田中さんは語る。", "この情報を世の中に拡散してください。医療界の闇を暴く時が来ました。"]
+    },
+    summary: "3日でガン消失・副作用ゼロ・拡散希望の語が同時に並ぶ典型的なプロパガンダ構造。一次情報URLが存在せず、信頼ドメインからのソースも見当たらない。",
+    obs: ["感情強度語（驚愕・拡散希望・絶対）が短文内に複数", "「医師は隠している」など匿名権威への訴え", "定量データの根拠提示なし"],
+    primary: ["記事中に信頼できる一次情報URLが見つかりません"],
+    evidence: [
+      { rating: "虚偽", ratingClass: "df-rating-warn", publisher: "Snopes", title: "Cancer cure claims debunked", url: "https://www.snopes.com/" },
+      { rating: "誤り", ratingClass: "df-rating-warn", publisher: "日本ファクトチェックセンター", title: "「3日でガン消失」拡散投稿は根拠不明", url: "https://www.factcheckcenter.jp/" }
+    ]
+  }
+};
+
+function escapeHtml(s) {
+  if (s === undefined || s === null) return "";
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function render(s) {
+  // 偽記事レンダリング
+  document.getElementById("article-title").textContent = s.article.title;
+  document.getElementById("article-meta").textContent = s.article.meta;
+  document.getElementById("article-lead").textContent = s.article.lead;
+  document.getElementById("article-body").innerHTML =
+    s.article.body.map((p) => "<p>" + escapeHtml(p) + "</p>").join("");
+
+  // メーターラベル
+  const meterLabel = document.getElementById("meter-label");
+  meterLabel.textContent = s.label;
+  meterLabel.classList.remove("df-high", "df-mid", "df-low", "df-warn");
+  meterLabel.classList.add(s.band);
+
+  // スコア値（メタ欄ミニ）
+  const sv = document.getElementById("score-value-mini");
+  sv.textContent = s.pct + "%";
+  sv.classList.remove("df-high", "df-mid", "df-low", "df-warn");
+  sv.classList.add(s.band);
+
+  // アイコン
+  document.getElementById("score-icon").textContent = s.icon;
+
+  // メーターリング
+  const ring = document.getElementById("meter-progress");
+  ring.classList.remove("df-high", "df-mid", "df-low", "df-warn");
+  ring.classList.add(s.band);
+  const C = 263.89;
+  ring.setAttribute("stroke-dasharray", C.toFixed(2));
+  ring.setAttribute("stroke-dashoffset", (C * (1 - s.pct / 100)).toFixed(2));
+
+  // 要約
+  document.getElementById("summary").textContent = s.summary;
+
+  // 構造観察
+  document.getElementById("obs").innerHTML =
+    s.obs.map((o) => "<li>" + escapeHtml(o) + "</li>").join("");
+
+  // 一次情報
+  document.getElementById("primary").innerHTML =
+    s.primary.map((p) => "<li>" + escapeHtml(p) + "</li>").join("");
+
+  // エビデンスソース
+  const evContainer = document.getElementById("evidence");
+  evContainer.innerHTML = "";
+  s.evidence.forEach((ev) => {
+    const a = document.createElement("a");
+    a.className = "df-evidence-card";
+    a.href = ev.url || "#";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.innerHTML =
+      '<div class="df-evidence-head">' +
+        '<span class="df-evidence-rating ' + (ev.ratingClass || "") + '">' + escapeHtml(ev.rating) + "</span>" +
+        '<span class="df-evidence-publisher">' + escapeHtml(ev.publisher) + "</span>" +
+      "</div>" +
+      '<div class="df-evidence-title">' + escapeHtml(ev.title) + "</div>" +
+      '<div class="df-evidence-url">' + escapeHtml(ev.url) + "</div>";
+    evContainer.appendChild(a);
+  });
+}
+
+const band = (new URLSearchParams(location.search).get("band") || "warn").toLowerCase();
+render(SCENARIOS[band] || SCENARIOS.warn);
+</script>
+</body>
+</html>

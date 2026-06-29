@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header class="header">
+  <span class="brand">DeepFact Validator</span>
+  <span class="brand-sub">情報のObservability</span>
+</header>
+<main>
+  <button id="analyze-current" class="btn-primary">このページを解析</button>
+  <div id="result" class="result hidden">
+    <div class="score-block">
+      <div class="meter">
+        <svg class="meter-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="meter-track" cx="50" cy="50" r="42" fill="none"></circle>
+          <circle id="meter-progress" class="meter-progress" cx="50" cy="50" r="42" fill="none"></circle>
+        </svg>
+        <div class="meter-center">
+          <span id="meter-label" class="meter-label">—</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <span class="score-meta-label">信頼度</span>
+        <span id="score-value" class="score-value-mini">—</span>
+        <span id="score-icon" class="score-icon">—</span>
+      </div>
+    </div>
+    <div id="summary" class="summary"></div>
+    <h3>構造観察</h3>
+    <ul id="observations" class="observations"></ul>
+    <h3>一次情報</h3>
+    <ul id="primary-sources" class="primary-sources"></ul>
+    <h3 id="evidence-heading" class="evidence-heading hidden">判定エビデンス・ソース</h3>
+    <div id="evidence-sources" class="evidence-sources"></div>
+  </div>
+  <div id="loading" class="loading hidden">
+    <span class="loading-text">解析中</span><span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+  </div>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

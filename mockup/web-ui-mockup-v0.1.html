@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepFact Validator — Web UI Mockup v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-navy:        #1B2A4E;
+  --color-navy-deep:   #131F3B;
+  --color-navy-soft:   #2A3B66;
+  --color-gold:        #C9A55C;
+  --color-gold-soft:   #E1C28A;
+  --color-gold-deep:   #A38440;
+  --color-paper:       #F8F6F1;
+  --color-paper-warm:  #EFEBE0;
+  --color-ink:         #1A1A1A;
+  --color-warning:     #C94A4A;
+  --color-rule:        rgba(201, 165, 92, 0.32);
+  --color-rule-soft:   rgba(27, 42, 78, 0.10);
+
+  --font-display:    "Shippori Mincho", "Noto Serif JP", "游明朝", "Yu Mincho", serif;
+  --font-display-en: "Cormorant Garamond", "Shippori Mincho", serif;
+  --font-body:       "Inter", "游ゴシック", "Yu Gothic", "Hiragino Sans", sans-serif;
+  --font-mono:       "JetBrains Mono", "SFMono-Regular", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); }
+
+.shell { max-width: 1200px; margin: 0 auto; padding: 56px 64px 80px; }
+
+/* ============ HEADER ============ */
+.dfv-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 56px;
+}
+.dfv-brand { display: flex; align-items: center; gap: 18px; }
+.dfv-emblem {
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--color-gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display-en);
+  font-size: 18px; font-weight: 500;
+  color: var(--color-navy); letter-spacing: 0.04em;
+}
+.dfv-brand-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--color-navy); letter-spacing: 0.02em; }
+.dfv-brand-sub { font-family: var(--font-display-en); font-size: 13px; color: var(--color-gold-deep); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px; }
+.dfv-status { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--color-navy-soft); letter-spacing: 0.06em; }
+.dfv-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2A9D5C; }
+
+/* ============ HERO ============ */
+.dfv-hero { padding: 24px 0 48px; }
+.dfv-eyebrow {
+  font-family: var(--font-display-en);
+  font-size: 13px; color: var(--color-gold-deep);
+  letter-spacing: 0.18em; text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.dfv-hook {
+  font-family: var(--font-display);
+  font-size: 72px; font-weight: 700; color: var(--color-navy);
+  line-height: 1.1; letter-spacing: -0.01em;
+  margin-bottom: 24px;
+}
+.dfv-hook .accent {
+  color: var(--color-gold-deep);
+  border-bottom: 3px solid var(--color-gold);
+  padding-bottom: 6px;
+}
+.dfv-lead {
+  font-size: 18px; line-height: 1.7; color: var(--color-navy-soft);
+  max-width: 640px; margin-bottom: 44px;
+}
+
+.dfv-input-row {
+  display: flex; gap: 16px; max-width: 760px;
+}
+.dfv-input {
+  flex: 1;
+  padding: 18px 22px;
+  background: white;
+  border: 1px solid var(--color-rule-soft);
+  border-left: 3px solid var(--color-gold);
+  font-family: var(--font-body); font-size: 15px;
+  color: var(--color-navy);
+  outline: none;
+}
+.dfv-input::placeholder { color: rgba(27, 42, 78, 0.35); }
+.dfv-input:focus { border-color: var(--color-gold); box-shadow: 0 0 0 1px var(--color-gold-soft); }
+.dfv-btn {
+  padding: 18px 36px;
+  background: var(--color-navy);
+  color: var(--color-paper);
+  border: none;
+  font-family: var(--font-body); font-size: 14px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.dfv-btn:hover { background: var(--color-navy-deep); }
+
+/* ============ RESULT SECTION ============ */
+.dfv-result-section { margin-top: 80px; }
+.dfv-section-tag {
+  font-family: var(--font-display-en);
+  font-size: 12px; color: var(--color-gold-deep);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.dfv-section-title {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 8px;
+}
+.dfv-section-sub {
+  font-family: var(--font-body); font-size: 14px;
+  color: var(--color-navy-soft);
+  margin-bottom: 40px;
+}
+
+.dfv-card {
+  background: white;
+  border: 1px solid var(--color-rule-soft);
+  padding: 48px 56px;
+  margin-bottom: 24px;
+}
+
+/* Score meter */
+.dfv-score-row {
+  display: grid; grid-template-columns: 1fr 380px;
+  gap: 64px; align-items: center;
+  margin-bottom: 44px;
+  padding-bottom: 44px;
+  border-bottom: 1px solid var(--color-rule-soft);
+}
+.dfv-score-meter {
+  display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px;
+}
+.dfv-score-num {
+  font-family: var(--font-display-en);
+  font-size: 96px; font-weight: 500; color: var(--color-warning);
+  line-height: 1; letter-spacing: -0.02em;
+}
+.dfv-score-tag {
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
+  color: var(--color-warning);
+}
+.dfv-score-label {
+  font-family: var(--font-body); font-size: 13px;
+  color: var(--color-navy-soft);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+.dfv-bar { height: 8px; background: var(--color-paper-warm); position: relative; margin-top: 24px; }
+.dfv-bar-fill { height: 100%; background: var(--color-warning); width: 20%; }
+.dfv-bar-marks { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--color-navy-soft); margin-top: 6px; letter-spacing: 0.06em; }
+
+.dfv-subscores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.dfv-sub-tile { padding: 20px 0; border-left: 2px solid var(--color-gold); padding-left: 20px; }
+.dfv-sub-label { font-family: var(--font-body); font-size: 11px; color: var(--color-navy-soft); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 8px; }
+.dfv-sub-value { font-family: var(--font-display-en); font-size: 36px; font-weight: 500; color: var(--color-navy); line-height: 1; }
+.dfv-sub-desc { font-family: var(--font-body); font-size: 12px; color: var(--color-navy-soft); margin-top: 8px; }
+
+/* Observation list */
+.dfv-observation-block { display: grid; grid-template-columns: 200px 1fr; gap: 56px; padding: 32px 0; border-bottom: 1px solid var(--color-rule-soft); }
+.dfv-observation-block:last-of-type { border-bottom: none; }
+.dfv-obs-label {
+  font-family: var(--font-display-en);
+  font-size: 13px; color: var(--color-gold-deep);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding-top: 4px;
+}
+.dfv-obs-label-jp { font-family: var(--font-display); font-size: 16px; color: var(--color-navy); margin-top: 8px; letter-spacing: 0.02em; }
+
+.dfv-obs-list { list-style: none; }
+.dfv-obs-list li {
+  font-family: var(--font-body); font-size: 15px; line-height: 1.8;
+  color: var(--color-ink);
+  padding: 8px 0 8px 24px;
+  position: relative;
+}
+.dfv-obs-list li::before {
+  content: "—";
+  position: absolute; left: 0;
+  color: var(--color-gold);
+  font-weight: 700;
+}
+.dfv-obs-quote { font-family: var(--font-display); font-size: 17px; font-weight: 500; color: var(--color-navy); line-height: 1.8; }
+
+/* Evidence sources */
+.dfv-evidence-section { margin-top: 56px; }
+.dfv-evidence-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--color-navy); margin-bottom: 28px; padding-left: 16px; border-left: 3px solid var(--color-gold); }
+.dfv-evidence-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.dfv-evi-card { background: var(--color-paper); border: 1px solid var(--color-rule-soft); padding: 24px 24px 20px; transition: border-color 200ms ease; cursor: pointer; }
+.dfv-evi-card:hover { border-color: var(--color-gold); }
+.dfv-evi-pub { font-family: var(--font-display-en); font-size: 11px; color: var(--color-gold-deep); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 10px; }
+.dfv-evi-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--color-navy); line-height: 1.5; margin-bottom: 16px; min-height: 44px; }
+.dfv-evi-url { font-family: var(--font-mono); font-size: 11px; color: var(--color-navy-soft); padding-top: 12px; border-top: 1px solid var(--color-rule-soft); letter-spacing: 0.04em; }
+
+/* ============ ARCH SECTION ============ */
+.dfv-arch-section { margin-top: 96px; padding-top: 64px; border-top: 1px solid var(--color-rule); }
+.dfv-arch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 40px; }
+.dfv-arch-card { padding: 28px 28px 32px; border: 1px solid var(--color-rule-soft); background: white; }
+.dfv-arch-num { font-family: var(--font-display-en); font-size: 13px; color: var(--color-gold-deep); letter-spacing: 0.2em; margin-bottom: 12px; }
+.dfv-arch-name { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--color-navy); margin-bottom: 6px; }
+.dfv-arch-en { font-family: var(--font-display-en); font-size: 13px; color: var(--color-navy-soft); letter-spacing: 0.08em; margin-bottom: 18px; }
+.dfv-arch-desc { font-family: var(--font-body); font-size: 13px; line-height: 1.7; color: var(--color-ink); }
+
+/* ============ FOOTER ============ */
+.dfv-foot {
+  margin-top: 96px; padding-top: 32px;
+  border-top: 1px solid var(--color-rule);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--color-navy-soft); letter-spacing: 0.12em;
+}
+
+@media (max-width: 800px) {
+  .shell { padding: 40px 28px 60px; }
+  .dfv-hook { font-size: 48px; }
+  .dfv-score-row { grid-template-columns: 1fr; gap: 32px; }
+  .dfv-subscores { grid-template-columns: 1fr; gap: 12px; }
+  .dfv-observation-block { grid-template-columns: 1fr; gap: 16px; }
+  .dfv-evidence-grid { grid-template-columns: 1fr; }
+  .dfv-arch-grid { grid-template-columns: 1fr; }
+  .dfv-input-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="dfv-header">
+    <div class="dfv-brand">
+      <div class="dfv-emblem">DV</div>
+      <div>
+        <div class="dfv-brand-name">DeepFact Validator</div>
+        <div class="dfv-brand-sub">情報の Observability</div>
+      </div>
+    </div>
+    <div class="dfv-status">
+      <span class="dfv-status-dot"></span>
+      <span>v0.4.10 · CLOUD RUN RUNNING</span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="dfv-hero">
+    <div class="dfv-eyebrow">Live · Browser-based fact-check</div>
+    <h1 class="dfv-hook">気づかないまま<br><span class="accent">騙されている</span></h1>
+    <p class="dfv-lead">
+      ChatGPT に聞く前に、AI Agent が情報の信頼度・バイアス・利害関係を構造可視化する。<br>
+      情報過多の時代に、疑問を持てない人にも届く能動介入型ファクトチェック。
+    </p>
+    <div class="dfv-input-row">
+      <input type="text" class="dfv-input" placeholder="URL を貼り付け、もしくは検証したいテキストを入力" value="3日でガンが消える奇跡の水を5万円で販売してます！副作用ゼロ！厚労省は隠蔽してるけど本当の真実です！拡散希望！">
+      <button class="dfv-btn">Analyze</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="dfv-result-section">
+    <div class="dfv-section-tag">Result · Live Analysis</div>
+    <h2 class="dfv-section-title">構造観察レポート</h2>
+    <p class="dfv-section-sub">Watcher · Investigator · Validator の 3 エージェントが Vertex AI Gemini 2.5 Flash で並列分析</p>
+
+    <article class="dfv-card">
+
+      <!-- Score row -->
+      <div class="dfv-score-row">
+        <div>
+          <div class="dfv-score-label">Overall Trust Score</div>
+          <div class="dfv-score-meter">
+            <span class="dfv-score-num">20</span>
+            <span class="dfv-score-tag">% · 警告</span>
+          </div>
+          <div class="dfv-bar"><div class="dfv-bar-fill"></div></div>
+          <div class="dfv-bar-marks"><span>0</span><span>30</span><span>60</span><span>100</span></div>
+        </div>
+        <div class="dfv-subscores">
+          <div class="dfv-sub-tile">
+            <div class="dfv-sub-label">出所</div>
+            <div class="dfv-sub-value">0.50</div>
+            <div class="dfv-sub-desc">未登録の発信元</div>
+          </div>
+          <div class="dfv-sub-tile">
+            <div class="dfv-sub-label">中立度</div>
+            <div class="dfv-sub-value">0.00</div>
+            <div class="dfv-sub-desc">極端な論調バイアス</div>
+          </div>
+          <div class="dfv-sub-tile">
+            <div class="dfv-sub-label">事実整合性</div>
+            <div class="dfv-sub-value">0.00</div>
+            <div class="dfv-sub-desc">一次情報リンク不在</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observation blocks -->
+      <div class="dfv-observation-block">
+        <div>
+          <div class="dfv-obs-label">Summary</div>
+          <div class="dfv-obs-label-jp">要約</div>
+        </div>
+        <p class="dfv-obs-quote">
+          未登録の発信元から提供されており、極端な論調バイアスと事実整合性の欠如が顕著です。特定の製品が短期間で重大な疾患を治癒し、副作用がないと断定する一方で、公的機関による隠蔽を訴える陰謀論的な要素を含んでいます。
+        </p>
+      </div>
+
+      <div class="dfv-observation-block">
+        <div>
+          <div class="dfv-obs-label">Structure</div>
+          <div class="dfv-obs-label-jp">構造観察</div>
+        </div>
+        <ul class="dfv-obs-list">
+          <li>発信元不明は「未登録」分類 既知信頼度カテゴリ unknown</li>
+          <li>記事内に信頼できる一次情報 URL が明示されていない</li>
+          <li>「奇跡の水」「本当の真実」感情を強く刺激する表現の使用</li>
+          <li>「3日でガンが消える」「副作用ゼロ」極端な効果を断定的に主張</li>
+          <li>「厚労省は隠蔽している」陰謀論的な不信感を煽る構造</li>
+        </ul>
+      </div>
+
+      <div class="dfv-observation-block">
+        <div>
+          <div class="dfv-obs-label">Contrarian</div>
+          <div class="dfv-obs-label-jp">別の立場</div>
+        </div>
+        <p class="dfv-obs-quote">
+          現代医学では、がん治療は複雑であり、3日で完治するような単一の「奇跡の水」は存在しないという見解。
+        </p>
+      </div>
+
+      <!-- Evidence sources -->
+      <div class="dfv-evidence-section">
+        <h3 class="dfv-evidence-title">判定エビデンス・ソース</h3>
+        <div class="dfv-evidence-grid">
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">日本ファクトチェックセンター</div>
+            <div class="dfv-evi-title">JFC — 国内主要ファクトチェック機関</div>
+            <div class="dfv-evi-url">factcheckcenter.jp</div>
+          </a>
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">FactCheck.org</div>
+            <div class="dfv-evi-title">非党派ファクトチェック</div>
+            <div class="dfv-evi-url">factcheck.org</div>
+          </a>
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">Lead Stories</div>
+            <div class="dfv-evi-title">IFCN 加盟 米国独立検証機関</div>
+            <div class="dfv-evi-url">leadstories.com</div>
+          </a>
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">Full Fact UK</div>
+            <div class="dfv-evi-title">英国独立ファクトチェック慈善団体</div>
+            <div class="dfv-evi-url">fullfact.org</div>
+          </a>
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">厚生労働省</div>
+            <div class="dfv-evi-title">医療ワクチンに関する公式 Q&A</div>
+            <div class="dfv-evi-url">mhlw.go.jp</div>
+          </a>
+          <a class="dfv-evi-card">
+            <div class="dfv-evi-pub">WHO</div>
+            <div class="dfv-evi-title">世界保健機関の公式情報</div>
+            <div class="dfv-evi-url">who.int</div>
+          </a>
+        </div>
+      </div>
+
+    </article>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="dfv-arch-section">
+    <div class="dfv-section-tag">Architecture · 3 Entry Points × Multi-Agent</div>
+    <h2 class="dfv-section-title">3 つの入口・1 つのバックエンド</h2>
+
+    <div class="dfv-arch-grid">
+      <div class="dfv-arch-card">
+        <div class="dfv-arch-num">01</div>
+        <div class="dfv-arch-name">Web UI</div>
+        <div class="dfv-arch-en">Browser App · No Login</div>
+        <p class="dfv-arch-desc">ブラウザだけで使える即時ファクトチェック ログイン不要 URL かテキストを送るだけで判定を取れる</p>
+      </div>
+      <div class="dfv-arch-card">
+        <div class="dfv-arch-num">02</div>
+        <div class="dfv-arch-name">Chrome Extension</div>
+        <div class="dfv-arch-en">Manifest V3 · DOM Overlay</div>
+        <p class="dfv-arch-desc">ユーザーがネットを見ている瞬間に AI Agent が能動介入 サイドパネルとオーバーレイ UI で判定をリアルタイム表示</p>
+      </div>
+      <div class="dfv-arch-card">
+        <div class="dfv-arch-num">03</div>
+        <div class="dfv-arch-name">LINE Bot</div>
+        <div class="dfv-arch-en">Push Message · QR Friend Add</div>
+        <p class="dfv-arch-desc">既存社内プロダクト構造完全流用 友達追加だけで一般ユーザーが使える QR 配布で利用障壁ゼロ</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="dfv-foot">
+    <span>株式会社 Liberaiz</span>
+    <span>2026 — v0.4.10 · Vertex AI Gemini 2.5 Flash</span>
+  </footer>
+
+</div>
+</body>
+</html>

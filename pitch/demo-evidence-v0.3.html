@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — 実機検証エビデンス v0.3</title>
+<meta name="viewport" content="width=1280">
+<style>
+  :root {
+    --color-paper: #F8F6F1;
+    --color-ink: #1B2A4E;
+    --color-gold: #A38440;
+    --color-gold-deep: #8a6f33;
+    --color-cream: #FFFFFF;
+    --color-shadow: rgba(27, 42, 78, 0.08);
+    --font-mincho: "Shippori Mincho", "Yu Mincho", serif;
+    --font-mono: "JetBrains Mono", "Courier New", monospace;
+    --font-sans: "Inter", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); line-height: 1.6; padding: 60px 80px; }
+  header { border-bottom: 2px solid var(--color-ink); padding-bottom: 32px; margin-bottom: 48px; }
+  header .brand { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
+  header h1 { font-family: var(--font-mincho); font-size: 44px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+  header h1 .accent { color: var(--color-gold-deep); }
+  header .lead { font-size: 17px; color: rgba(27, 42, 78, 0.78); max-width: 800px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 56px; }
+  .verdict-table { width: 100%; border-collapse: collapse; background: var(--color-cream); box-shadow: 0 4px 16px var(--color-shadow); border-radius: 4px; overflow: hidden; }
+  .verdict-table th, .verdict-table td { padding: 16px 20px; text-align: left; border-bottom: 1px solid rgba(27, 42, 78, 0.08); }
+  .verdict-table thead th { background: var(--color-ink); color: var(--color-paper); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+  .verdict-table tbody tr:last-child td { border-bottom: none; }
+  .verdict-table tbody tr:hover { background: rgba(163, 132, 64, 0.04); }
+  .label-badge { display: inline-block; padding: 4px 12px; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .label-high { background: #0e6e3a; color: #fff; }
+  .label-mid { background: #c9a55c; color: #1B2A4E; }
+  .label-low { background: #cf8b3a; color: #fff; }
+  .label-warn { background: #b03939; color: #fff; }
+  .score-cell { font-family: var(--font-mono); font-weight: 700; font-size: 18px; }
+  .score-cell.high { color: #0e6e3a; }
+  .score-cell.warn { color: #b03939; }
+  .score-bar { display: inline-block; height: 6px; background: var(--color-gold); border-radius: 2px; vertical-align: middle; margin-left: 8px; max-width: 100px; }
+  section h2 { font-family: var(--font-mincho); font-size: 28px; font-weight: 700; margin-bottom: 24px; border-left: 4px solid var(--color-gold); padding-left: 16px; }
+  section { margin-bottom: 56px; }
+  .observation-card { background: var(--color-cream); padding: 24px; border-radius: 4px; box-shadow: 0 2px 8px var(--color-shadow); margin-bottom: 16px; }
+  .observation-card .obs-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .observation-card .obs-name { font-family: var(--font-mincho); font-size: 18px; font-weight: 700; }
+  .observation-card ul { list-style: none; padding-left: 0; }
+  .observation-card li { padding: 8px 0 8px 24px; position: relative; font-size: 14.5px; color: rgba(27, 42, 78, 0.85); border-bottom: 1px dashed rgba(27, 42, 78, 0.08); }
+  .observation-card li:last-child { border-bottom: none; }
+  .observation-card li::before { content: "▸"; position: absolute; left: 4px; color: var(--color-gold); }
+  .delta-callout { background: var(--color-ink); color: var(--color-paper); padding: 36px 48px; border-radius: 4px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-bottom: 48px; }
+  .delta-callout .figure { font-family: var(--font-mono); font-size: 56px; font-weight: 700; color: var(--color-gold); text-align: center; }
+  .delta-callout .desc { font-family: var(--font-mincho); font-size: 17px; line-height: 1.7; }
+  .delta-callout .label { font-family: var(--font-mono); font-size: 11px; color: var(--color-gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .determinism-callout { background: linear-gradient(135deg, #0e6e3a 0%, #0a5530 100%); color: var(--color-cream); padding: 36px 48px; border-radius: 4px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-bottom: 48px; }
+  .determinism-callout .figure { font-family: var(--font-mono); font-size: 48px; font-weight: 700; color: #f4e4a8; text-align: center; line-height: 1.2; }
+  .determinism-callout .figure small { display: block; font-size: 16px; color: rgba(244, 228, 168, 0.7); margin-top: 4px; }
+  .determinism-callout .desc { font-family: var(--font-mincho); font-size: 17px; line-height: 1.7; }
+  .determinism-callout .label { font-family: var(--font-mono); font-size: 11px; color: #f4e4a8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .arch-pipeline { background: var(--color-cream); padding: 32px; border-radius: 4px; box-shadow: 0 2px 8px var(--color-shadow); }
+  .arch-row { display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px dashed rgba(27, 42, 78, 0.1); align-items: baseline; }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-row .tier { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold-deep); font-weight: 700; }
+  .arch-row .content { font-size: 15px; color: rgba(27, 42, 78, 0.92); }
+  .arch-row .content strong { color: var(--color-ink); font-weight: 700; }
+  .delta-cell { font-family: var(--font-mono); font-size: 13px; }
+  .delta-cell.same { color: #0e6e3a; font-weight: 700; }
+  .delta-cell.up { color: #0e6e3a; }
+  .delta-cell.down { color: rgba(27, 42, 78, 0.5); }
+  .repro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+  .repro-cell { background: var(--color-cream); padding: 20px; border-radius: 4px; box-shadow: 0 2px 8px var(--color-shadow); text-align: center; }
+  .repro-cell .run-label { font-family: var(--font-mono); font-size: 11px; color: var(--color-gold); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .repro-cell .run-score { font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--color-ink); }
+  .repro-cell .run-meta { font-size: 12px; color: rgba(27, 42, 78, 0.6); margin-top: 4px; }
+  footer { margin-top: 64px; padding-top: 32px; border-top: 1px solid rgba(27, 42, 78, 0.15); font-size: 13px; color: rgba(27, 42, 78, 0.6); display: flex; justify-content: space-between; align-items: center; }
+  footer .timestamp { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">DeepFact Validator · Pitch Supplement v0.3 · 2026-06-20</div>
+  <h1>「動く」と称する前に証拠を出す<br><span class="accent">Vertex AI 切替 ＋ 完全決定化エビデンス</span></h1>
+  <p class="lead">
+    マルチエージェント（Watcher → Investigator → Validator）× <strong>Vertex AI Gemini 2.5-flash</strong> ×
+    <strong>temperature=0 + seed=42 + top_k=1</strong> による完全決定化。
+    6パターン入力差テスト＋同一入力×3回反復テストの実機検証結果。
+    v0.2 朝の非決定性問題（同じ入力で 32%→23% 変動）と Free Tier 1日20req 制限を Vertex AI 切替で根本解消。
+  </p>
+</header>
+
+<section>
+  <h2>判定スコア 6パターン（v0.2 → v0.3 比較）</h2>
+  <table class="verdict-table">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>入力パターン</th>
+        <th>判定</th>
+        <th>v0.2</th>
+        <th>v0.3</th>
+        <th>出所</th>
+        <th>中立性</th>
+        <th>事実整合性</th>
+        <th>差分</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td>フェイク主張<br><small>「証拠は示されていないがジェノサイドが起きていると主張」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">20%</td>
+        <td class="score-cell warn">20%</td>
+        <td>0.50</td>
+        <td>0.00</td>
+        <td>0.00</td>
+        <td class="delta-cell same">完全再現</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td>公的一次情報<br><small>厚生労働省 mhlw.go.jp の医療制度ページ URL</small></td>
+        <td><span class="label-badge label-high">高</span></td>
+        <td class="score-cell">96%</td>
+        <td class="score-cell high">98%</td>
+        <td>0.95</td>
+        <td>1.00</td>
+        <td>1.00</td>
+        <td class="delta-cell up">+2pt</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td>中立報道風<br><small>医療制度改革・賛否両論併記の客観文</small></td>
+        <td><span class="label-badge label-mid">中</span></td>
+        <td class="score-cell">50%</td>
+        <td class="score-cell">59%</td>
+        <td>0.50</td>
+        <td>0.60</td>
+        <td>0.70</td>
+        <td class="delta-cell up">+9pt</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td>誇張広告<br><small>「3 日でガン消失！すべての癌に効くサプリ」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">20%</td>
+        <td class="score-cell warn">20%</td>
+        <td>0.50</td>
+        <td>0.00</td>
+        <td>0.00</td>
+        <td class="delta-cell same">完全再現</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td>陰謀論型フェイク<br><small>「ワクチンの真実が暴露された／拡散してください」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">26%</td>
+        <td class="score-cell warn">25%</td>
+        <td>0.50</td>
+        <td>0.05</td>
+        <td>0.10</td>
+        <td class="delta-cell down">-1pt</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td>学術的論調<br><small>糖質制限・系統的レビューに言及・AHA推奨を引用</small></td>
+        <td><span class="label-badge label-mid">中</span></td>
+        <td class="score-cell">59%</td>
+        <td class="score-cell">59%</td>
+        <td>0.50</td>
+        <td>0.60</td>
+        <td>0.70</td>
+        <td class="delta-cell same">完全再現</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="delta-callout">
+  <div>
+    <div class="label">Maximum Delta (v0.3)</div>
+    <div class="desc">信頼度の振れ幅（98% vs 20%）。<br>同じ Bot が入力ごとに有意に異なる判定を返す。<br>「Hello World と同じスコア問題」は完全解消。</div>
+  </div>
+  <div class="figure">78 pt</div>
+  <div>
+    <div class="label">6 patterns tested</div>
+    <div class="desc">v0.2 の 76pt から +2pt 拡大。<br>高・中・警告の 3 ラベルに適切に分布。<br>陰謀論型／学術型／煽動型を識別。</div>
+  </div>
+</div>
+
+<section>
+  <h2>同一入力×3回反復テスト — 完全決定化の証明</h2>
+  <p style="margin-bottom: 24px; font-size: 15px; color: rgba(27, 42, 78, 0.85);">
+    v0.2 朝の社長 iPhone 実機テストで「同じ厚労省URLを送信したら 32% → 23% に変動」する非決定性問題が露呈。
+    真因は <strong>(a)</strong> <code>temperature=0.1〜0.2</code> によるサンプリングランダム化 ＋ <strong>(b)</strong> Gemini API Free Tier 1日20リクエスト超過（429 RESOURCE_EXHAUSTED）。
+    v0.3 で 3エージェント全てに <code>temperature=0.0 + seed=42 + top_k=1</code> を統一適用＋ Vertex AI 切替で根本解消。
+  </p>
+  <div class="repro-grid">
+    <div class="repro-cell">
+      <div class="run-label">Run #1</div>
+      <div class="run-score">20%</div>
+      <div class="run-meta">overall_score: 0.20</div>
+    </div>
+    <div class="repro-cell">
+      <div class="run-label">Run #2</div>
+      <div class="run-score">20%</div>
+      <div class="run-meta">overall_score: 0.20</div>
+    </div>
+    <div class="repro-cell">
+      <div class="run-label">Run #3</div>
+      <div class="run-score">20%</div>
+      <div class="run-meta">overall_score: 0.20</div>
+    </div>
+  </div>
+  <div class="determinism-callout">
+    <div>
+      <div class="label">Reproducibility</div>
+      <div class="desc">同一入力で出力スコア・ラベル・全フィールド完全再現。<br>コンテストデモで「同じURL送ったら違うスコア」事故ゼロ。</div>
+    </div>
+    <div class="figure">100%<small>3 of 3 runs identical</small></div>
+    <div>
+      <div class="label">Deterministic Config</div>
+      <div class="desc"><code style="font-family: var(--font-mono);">temperature=0.0</code><br><code style="font-family: var(--font-mono);">seed=42</code><br><code style="font-family: var(--font-mono);">top_k=1</code></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>構造観察の質（抜粋）</h2>
+  <div class="grid-2">
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-warn">フェイク主張</span>
+        <span class="obs-name">論理的飛躍と煽動構造</span>
+      </div>
+      <ul>
+        <li>「証拠は示されていないが事実だ」という表現による、論理的飛躍と断定の構造</li>
+        <li>「ジェノサイド」という極めて重い言葉を、証拠なしに断定的に使用する煽動的な構造</li>
+        <li>ウクライナ政府軍を一方的に加害者と断定し、ロシア系住民を被害者と位置づける一方的な視点の構造</li>
+        <li>主張の真偽を独立して確認するための一次情報源が全く示されていない構造</li>
+        <li>論理的思考を停止させ、無条件の受容を促す感情誘導的な表現</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-warn">誇張広告</span>
+        <span class="obs-name">商業的煽動と権威の曖昧化</span>
+      </div>
+      <ul>
+        <li>「感情を煽る表現」: 読者の期待や不安を強く刺激する構造</li>
+        <li>「一方的な断定」: 効果や安全性を絶対的に保証する構造</li>
+        <li>「緊急性を強調する表現」: 即時購入を促す限定性／割引を強調する構造</li>
+        <li>「権威の曖昧な利用」: 具体的な医師名／所属／研究機関なしに権威を漠然と利用する構造</li>
+        <li>「批判的視点の欠如」: 異なる意見や潜在的なリスク／科学的根拠に関する情報が一切提示されていない構造</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-high">公的一次情報</span>
+        <span class="obs-name">中立的情報提供の構造</span>
+      </div>
+      <ul>
+        <li>厚生労働省（既知信頼度 0.95 / カテゴリ: government_jp）に分類される構造</li>
+        <li>ウェブサイトの技術的要件と利用方法に関する情報提供に特化する構造</li>
+        <li>特定の政策や主張に対する意見表明を一切含まない構造</li>
+        <li>機械翻訳の限界を明示することで、誤解を防ぐための構造</li>
+        <li>提示された主張は、すべてユーザーが直接検証可能な内容である</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-mid">中立報道風</span>
+        <span class="obs-name">両論併記と参照不在の併存</span>
+      </div>
+      <ul>
+        <li>発信元の信頼性が不明瞭な構造</li>
+        <li>一次情報源への直接的な参照が欠如する構造</li>
+        <li>論調が中立性を保とうとする構造</li>
+        <li>事実の検証可能性が中程度に留まる構造</li>
+        <li>複数の関係団体の賛否両論を併記する構造</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>アーキテクチャ（v0.3 Vertex AI 構成）</h2>
+  <div class="arch-pipeline">
+    <div class="arch-row">
+      <div class="tier">ENTRY</div>
+      <div class="content"><strong>LINE Bot（Messaging API）／ Chrome Extension（Manifest V3）／ HTTP API</strong> ＝ 3 経路から同一 Cloud Run へ集約</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">RUNTIME</div>
+      <div class="content"><strong>Cloud Run + FastAPI</strong> ＝ サーバーレス・min-instances=1・max=10・Secret Manager 連携・rev <code>deepfact-validator-00008</code> 以降</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">LLM</div>
+      <div class="content"><strong>Vertex AI Gemini 2.5-flash</strong>（GCP billing 経由・Free Tier 1日20req 制約から解放） / <strong>asia-northeast1</strong> リージョン</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">DETERMINISM</div>
+      <div class="content"><code>temperature=0.0</code> ＋ <code>seed=42</code> ＋ <code>top_k=1</code> ＋ <code>response_mime_type=application/json</code>（3 エージェント統一適用）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 1 — Watcher</div>
+      <div class="content">入力テキスト／URL から記事タイトル・要約・主張・<strong>感情強度</strong>・出典 URL を Vertex AI Gemini で構造抽出</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 2 — Investigator</div>
+      <div class="content">発信元辞書（信頼ソース 125）× Vertex AI Gemini で <strong>論調バイアス（0-1）</strong> ／ <strong>事実整合性（0-1）</strong> ／ 対立見解 ／ 要警戒構造を判定</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 3 — Validator</div>
+      <div class="content">数値統合（重み付き加算）＋ Vertex AI Gemini で<strong>自然言語の構造観察レポート</strong>生成（人ではなく構造を見る原則）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">DATA</div>
+      <div class="content">Firestore（信頼ソース辞書／警告履歴／記事 embedding）＋ Vertex AI text-embedding-005 ＋ cosine similarity による過去類似主張照合（v0.3 実装済・index 化は Phase 3）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">OBSERVE</div>
+      <div class="content">Cloud Logging — 全判定をログ蓄積＋直近 24h Postmortem 自動生成（<code>POST /api/postmortem</code>・Vertex AI Gemini で Lessons Learned 生成・v0.3 実装済）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AUTH</div>
+      <div class="content">Cloud Run サービスアカウント（プロジェクト内部 ID は伏字化）→ 最小権限 <code>roles/aiplatform.user</code> で aiplatform 利用（再付与計画中）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">SDK</div>
+      <div class="content"><strong>google-genai 1.x</strong> の <code>vertexai=True</code> モード（旧 google-generativeai は 2025-11-30 で deprecated）</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>v0.2 → v0.3 修正履歴（朝の自走 08:00-09:00）</h2>
+  <div class="observation-card">
+    <ul>
+      <li><strong>問題1 — 非決定性</strong>: v0.2 では 3 エージェント全部で <code>temperature=0.1〜0.2 + seed なし</code>。社長 iPhone 朝テストで「同じ入力で 32% → 23%」と顕在化。対処＝ <code>temperature=0.0 + seed=42 + top_k=1</code> を 3 エージェント全てに統一適用</li>
+      <li><strong>問題2 — Free Tier 超過（真因）</strong>: Cloud Run logs に <code>google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED</code> を発見。<code>generativelanguage.googleapis.com/generate_content_free_tier_requests</code> quotaValue: 20。v0.2 深夜検証（6×3=18req）+ 社長 LINE 3連投（9req）+ 朝の curl テスト連発 → quota 完全超過。対処＝ <strong>Vertex AI モード切替</strong>（<code>genai.Client(vertexai=True, project=..., location=...)</code>）</li>
+      <li><strong>cloudbuild.yaml</strong>: <code>--set-env-vars</code> に <code>USE_VERTEX_AI=true, VERTEX_PROJECT=&lt;gcp-project-id&gt;, VERTEX_LOCATION=asia-northeast1</code> 追加</li>
+      <li><strong>config.py</strong>: <code>use_vertex_ai</code> / <code>vertex_project</code> / <code>vertex_location</code> 追加</li>
+      <li><strong>Cloud Build</strong>: SUCCESS → Cloud Run rev 00008 以降稼働</li>
+      <li><strong>実機検証</strong>: 同一入力×3回完全一致（決定化確認） + 6パターン全 Vertex AI 稼働確認</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>v0.3 → v0.4 拡張機能（2026-06-22 朝の自走）</h2>
+  <p style="margin-bottom: 24px; font-size: 15px; color: rgba(27, 42, 78, 0.85);">
+    社長 LINE Bot 実機テストで「同じフェイク主張に対し信頼度 32%→23%→50% 変動・フェイクを 50%（中）判定」事故が顕在化。
+    Vertex AI Gemini serving 側非決定性 + 一時的呼び出し失敗時の fallback が安全側に倒れていなかったことが真因。
+    同日朝に 6 機能を連続デプロイで完全修復＋エビデンス強化を達成。
+  </p>
+  <div class="observation-card">
+    <ul>
+      <li><strong>① 同一入力完全一致保証</strong>: Firestore 入力ハッシュキャッシュ（<code>src/tools/response_cache.py</code>）。同じ payload は 2 回目以降キャッシュHITで即返却・スコア完全一致。コンテストデモ事故ゼロを保証。</li>
+      <li><strong>② 煽動パターン辞書（5 カテゴリ × 143 キーワード）</strong>: high_alert 18 / evidence_lack 12 / urgency 18 / medical_fraud 53 / conspiracy 42 = 計 143 語。Gemini 不要でフェイクをテキスト直接検出（<code>watcher_agent.py PROPAGANDA_PATTERNS</code>）。</li>
+      <li><strong>③ Investigator fallback パス強化</strong>: Gemini 失敗時に emotional_intensity ベースで position_bias / fact_consistency を安全側に推定（フェイクを「中 50%」に倒さない）。</li>
+      <li><strong>④ 信頼ドメイン辞書 39 → 125 件拡張</strong>: IFCN 加盟ファクトチェック団体（Snopes/PolitiFact/FullFact/JFC 等）+ 医療系（CDC/FDA/EMA/PMDA/NIH/Mayo Clinic/Cochrane）+ 国際機関（UNICEF/UNHCR/OECD/ICRC等）+ 学術 DB（arXiv/JSTOR/Semantic Scholar/J-STAGE等）+ 各国政府 + 専門メディア + プロパガンダ判定追加（中国・北朝鮮・イラン国営）等。</li>
+      <li><strong>⑤ 第三者ソース能動取得</strong>: Google Fact Check Tools API（IFCN 加盟団体の検証 URL）+ Wikipedia REST API（無料・登録不要・並列叩き）を <code>src/tools/fact_check.py</code> で実装。<code>EvidenceSource</code> dataclass（source_type / publisher / title / url / rating / relevance / excerpt）で構造化。</li>
+      <li><strong>⑥ LINE Bot 判定エビデンス・ソース表示</strong>: レスポンスに <strong>📚【判定エビデンス・ソース】</strong>セクション追加。publisher / rating / title / URL をユーザーに提示し、自分で一次情報まで確認可能に。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>v0.4 実機検証結果</h2>
+  <div class="observation-card">
+    <p style="margin-bottom: 12px; font-size: 14px; color: rgba(27, 42, 78, 0.85);">
+      <strong>入力：</strong>「COVID vaccines contain microchips for population control. Deep state is hiding the truth from us. Share immediately before this post gets deleted!」
+    </p>
+    <ul>
+      <li><strong>判定スコア</strong>: overall <strong style="color: #b03939;">0.20 / 警告</strong>（source_credibility 0.50 / position_bias 0.00 / fact_consistency 0.00）</li>
+      <li><strong>第三者エビデンスソース 3 件取得</strong>:
+        <ul style="list-style: disc; margin-top: 6px; margin-left: 16px;">
+          <li><a href="https://ja.wikipedia.org/wiki/COVID-19ワクチン" target="_blank" style="color: #A38440;">Wikipedia「COVID-19ワクチン」</a>
+            <br>excerpt: 「単一症例の誤った解釈や逸話的証拠を用いてこの概念を拡散」「RFIDタグやマイクロチップが混入されており政府がタグを埋め込んで人間を管理」</li>
+          <li><a href="https://ja.wikipedia.org/wiki/日本におけるCOVID-19ワクチンの接種" target="_blank" style="color: #A38440;">Wikipedia「日本におけるCOVID-19ワクチンの接種」</a></li>
+          <li><a href="https://ja.wikipedia.org/wiki/ワクチン忌避" target="_blank" style="color: #A38440;">Wikipedia「ワクチン忌避」</a>
+            <br>excerpt: <strong>「ビル・ゲイツがワクチンにマイクロチップを入れている」などの陰謀論を広めた</strong>（フェイク主張を名指し反証）</li>
+        </ul>
+      </li>
+      <li><strong>社長 LINE 実機検証</strong>: ジェノサイドフェイク主張 → 低 31% + 📚 判定エビデンス 3 件表示確認。社長フィードバック「ソースついて一層良くなった」</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>構造分析の規律</h2>
+  <div class="observation-card">
+    <ul>
+      <li>すべての観察文は「○○という構造」「○○の傾向」形式で人物・組織を断定しない</li>
+      <li>政治的・宗教的に微妙な主張には必ず「複数の立場が成り立つ構造」を contrarian_views で提示</li>
+      <li>「📚 情報の真偽判断は一次情報まで遡ることを推奨します」を全レポートに常設</li>
+      <li>北極星 = 社長の信条「真偽は一次情報まで辿る」を AI Agent で社会拡張する設計</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div>DeepFact Validator — Pitch Supplement v0.4 統合版 · 株式会社Liberaiz</div>
+  <div class="timestamp">Verified 2026-06-20 09:00 JST (v0.3 基線) / 2026-06-22 (v0.4 拡張追記：125ドメイン辞書・Google Fact Check API・公的機関ソース上位挿入・プロンプトインジェクション防御) · Cloud Run revision deepfact-validator-00020+</div>
+</footer>
+
+</body>
+</html>

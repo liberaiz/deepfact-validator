@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — DevOps統合アーキテクチャ</title>
+<style>
+/*
+  ===== 設計方針 =====
+  DPR=1.75 環境でのscreenshot → 物理1920×1080が出力される
+  論理ビューポート = 1920/1.75 ≒ 1097 × 617px
+  → HTMLを 1097×617 で設計、overflow:hiddenで固定
+  → take_screenshotがDPR倍率で1920×1080相当に自動拡張
+
+  ===== レイアウト計算 (1097×617) =====
+  ヘッダー: top=18, h=58 → 下端=76
+  コンテンツ帯: top=84 〜 bottom=560 → 有効高=476px
+
+  横3ゾーン:
+    LEFT   : left=20, width=138  → right=158
+    gap1   : 158→178 (20px)
+    CENTER : left=178, width=252 → right=430
+    gap2   : 430→450 (20px)
+    RIGHT  : left=450, width=627 → right=1077 (余白20px)
+
+  入口カード3枚 (h=62, gap=17):
+    総高=62×3+17×2=220px
+    top=84+(476-220)/2=84+128=212
+    c1:212-274, c2:291-353, c3:370-432
+
+  エージェントカード3枚 (h=78, gap=24):
+    総高=78×3+24×2=282px
+    top=84+(476-282)/2=84+97=181
+    c1:181-259, arr:259-283, c2:283-361, arr:361-385, c3:385-463
+
+  GCPグリッド 2列3行 (card h=62, gap=10):
+    総高=62×3+10×2=206px
+    left=450, width=627, padding各10
+    各card幅=(627-20-10)/2=298.5→298px
+    top=84+(476-206)/2=84+135=219
+    (GCPゾーンラベル28px分: top=84+28+... → 実top=112)
+    row1: 112+(476-206-28)/2=112+121=233 → gcp-grid top 考慮で調整
+    シンプルに: gcp-zone top=84, ラベル28px → grid開始=112
+    grid総高=206px → grid中心y=112+103=215 (上端基準)
+    下端=112+206=318 → OK (560より十分上)
+
+  下部バー: top=565, h=42 → bottom=607 ✓
+
+  SVG矢印座標:
+    入口右端x=158, entry card中心y: c1=243, c2=322, c3=401
+    エージェント左端x=178, 中心x=304
+    ag-c1中心y=220, ag-c2中心y=322, ag-c3中心y=424
+    GCP左端x=450
+    GCP row中心y: r1≒246, r2≒318, r3≒390
+*/
+
+html, body {
+  margin: 0; padding: 0;
+  width: 1097px; height: 617px;
+  overflow: hidden;
+  background: #F4F1E8;
+}
+* { box-sizing: border-box; }
+
+.canvas {
+  width: 1097px; height: 617px;
+  background: #F4F1E8;
+  position: relative; overflow: hidden;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+}
+
+.bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 80% at 50% 50%, #EDE8DB 0%, transparent 100%);
+  z-index: 0;
+}
+
+/* ── ヘッダー ─── */
+.hd {
+  position: absolute;
+  top: 18px; left: 20px; right: 20px;
+  z-index: 10;
+}
+.hd-title {
+  font-size: 20px; font-weight: 600;
+  color: #1F1F1F; letter-spacing: 1.5px;
+}
+.hd-sub {
+  font-size: 10px; color: #2D5A40;
+  letter-spacing: 4px; margin-top: 3px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500;
+}
+.hd-rule {
+  width: 100%; height: 1px;
+  background: #C5BFA8; margin-top: 7px;
+}
+
+/* ── ゾーンラベル ── */
+.zlabel {
+  position: absolute;
+  font-size: 8px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500; letter-spacing: 3px;
+  color: #9A9480; z-index: 10;
+  text-align: center;
+}
+
+/* ── 入口カード ── */
+.entry-zone {
+  position: absolute;
+  left: 20px; top: 212px;
+  width: 138px; z-index: 5;
+}
+.ec {
+  width: 100%; height: 62px;
+  background: #FAFAF7;
+  border: 1px solid #C5BFA8;
+  border-left: 3px solid #2D5A40;
+  border-radius: 3px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.ec + .ec { margin-top: 17px; }
+.ec-name {
+  font-size: 11px; font-weight: 600;
+  color: #1F1F1F; letter-spacing: 0.5px;
+}
+.ec-desc {
+  font-size: 8.5px; color: #6A6A6A;
+  margin-top: 2px; line-height: 1.4;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+/* ── エージェント ── */
+.agent-bg {
+  position: absolute;
+  left: 170px; top: 167px;
+  width: 268px; height: 308px;
+  background: rgba(45,90,64,0.03);
+  border: 1px dashed #CCCAB8;
+  border-radius: 5px; z-index: 3;
+}
+.agent-zone {
+  position: absolute;
+  left: 178px; top: 175px;
+  width: 252px; z-index: 5;
+}
+.ag {
+  width: 100%; height: 78px;
+  background: #F8F6F1;
+  border: 1px solid #B8B2A0;
+  border-top: 3px solid #2D5A40;
+  border-radius: 3px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 0 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  z-index: 6; position: relative;
+}
+.ag + .ag { margin-top: 24px; }
+.ag-badge {
+  font-size: 7px; letter-spacing: 4px;
+  color: #2D5A40;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500; margin-bottom: 2px;
+}
+.ag-name {
+  font-size: 18px; font-weight: 600;
+  color: #1F1F1F; letter-spacing: 1.5px;
+}
+.ag-role {
+  font-size: 8.5px; color: #5A5A5A;
+  margin-top: 2px; line-height: 1.4;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.ag-arr {
+  width: 1.5px; height: 24px;
+  background: #2D5A40;
+  margin: 0 auto; position: relative;
+}
+.ag-arr::after {
+  content: '';
+  position: absolute; bottom: -5px; left: -3.5px;
+  width: 0; height: 0;
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-top: 7px solid #2D5A40;
+}
+
+/* ── GCPゾーン ──
+   left=450, width=627, right端=1077 (余白20px)
+   各カード幅=(627-20-10)/2=298px
+*/
+.gcp-zone {
+  position: absolute;
+  left: 450px; top: 84px;
+  width: 627px; z-index: 5;
+}
+.gcp-lbl {
+  font-size: 8px; letter-spacing: 3px;
+  color: #9A9480; margin-bottom: 8px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500;
+}
+.gcp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.gc {
+  background: #FAFAF7;
+  border: 1px solid #C5BFA8;
+  border-radius: 3px;
+  padding: 9px 12px;
+  height: 62px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.gc::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 2.5px;
+  border-radius: 3px 0 0 3px;
+}
+.gc.c1::before { background: #2D5A40; }
+.gc.c2::before { background: #3D6A50; }
+.gc.c3::before { background: #4A7A5A; }
+.gc.c4::before { background: #6A8A72; }
+.gc.c5::before { background: #8A6E3E; }
+.gc.c6::before { background: #8B3A2E; }
+
+.gc-svc {
+  font-size: 12px; font-weight: 600;
+  color: #1F1F1F; letter-spacing: 0.5px;
+}
+.gc-en {
+  font-size: 8px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  color: #7A7A6A; margin-top: 1px;
+}
+.gc-role {
+  font-size: 9px; color: #2D5A40;
+  margin-top: 3px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-weight: 500; line-height: 1.3;
+}
+
+/* ── SVG矢印 ── */
+.arr-svg {
+  position: absolute; inset: 0;
+  z-index: 4; pointer-events: none;
+}
+
+/* ── 下部DevOpsバー ── */
+.devbar {
+  position: absolute;
+  bottom: 14px; left: 20px; right: 20px;
+  z-index: 8;
+}
+.devbar-rule {
+  width: 100%; height: 1px;
+  background: #C5BFA8; margin-bottom: 6px;
+}
+.devbar-row { display: flex; }
+.dbi {
+  flex: 1; text-align: center;
+  padding: 4px 4px;
+  border-right: 1px solid #DDDACC;
+}
+.dbi:last-child { border-right: none; }
+.dbi-name {
+  font-size: 8px; font-weight: 600;
+  color: #2D5A40; letter-spacing: 2.5px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.dbi-desc {
+  font-size: 7.5px; color: #9A9480;
+  margin-top: 1px;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  line-height: 1.3;
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="bg"></div>
+
+  <!-- ヘッダー -->
+  <div class="hd">
+    <div class="hd-title">DeepFact Validator — DevOps 統合アーキテクチャ</div>
+    <div class="hd-sub">INFORMATION OBSERVABILITY &times; GOOGLE CLOUD DEVOPS STACK</div>
+    <div class="hd-rule"></div>
+  </div>
+
+  <!-- ゾーンラベル -->
+  <div class="zlabel" style="left:20px; top:196px; width:138px;">INPUT LAYER</div>
+  <div class="zlabel" style="left:170px; top:152px; width:268px;">MULTI-AGENT CORE</div>
+
+  <!-- 入口3つ -->
+  <div class="entry-zone">
+    <div class="ec">
+      <div class="ec-name">&#127760; Chrome Extension</div>
+      <div class="ec-desc">Manifest V3 / MutationObserver<br>DOMオーバーレイ / SSE受信</div>
+    </div>
+    <div class="ec">
+      <div class="ec-name">&#128172; LINE Bot</div>
+      <div class="ec-desc">URL / スクショ送信<br>友達追加のみ・利用障壁ゼロ</div>
+    </div>
+    <div class="ec">
+      <div class="ec-name">&#9889; HTTP API</div>
+      <div class="ec-desc">FastAPI / POST /api/analyze<br>POST /api/postmortem</div>
+    </div>
+  </div>
+
+  <!-- エージェント背景帯 -->
+  <div class="agent-bg"></div>
+
+  <!-- 3エージェント -->
+  <div class="agent-zone">
+    <div class="ag">
+      <div class="ag-badge">AGENT 01</div>
+      <div class="ag-name">Watcher</div>
+      <div class="ag-role">記事抽出・主張抽出・感情強度・煽動パターン検出（143語辞書）</div>
+    </div>
+    <div style="display:flex;justify-content:center;">
+      <div class="ag-arr"></div>
+    </div>
+    <div class="ag">
+      <div class="ag-badge">AGENT 02</div>
+      <div class="ag-name">Investigator</div>
+      <div class="ag-role">125ドメイン照合・論調バイアス・第三者ソース能動取得</div>
+    </div>
+    <div style="display:flex;justify-content:center;">
+      <div class="ag-arr"></div>
+    </div>
+    <div class="ag">
+      <div class="ag-badge">AGENT 03</div>
+      <div class="ag-name">Validator</div>
+      <div class="ag-role">スコア統合・構造観察レポート生成・信頼度ラベル付与</div>
+    </div>
+  </div>
+
+  <!-- GCPスタック -->
+  <div class="gcp-zone">
+    <div class="gcp-lbl">GOOGLE CLOUD PLATFORM — DEVOPS INTEGRATION</div>
+    <div class="gcp-grid">
+      <div class="gc c1">
+        <div class="gc-svc">Cloud Logging</div>
+        <div class="gc-en">Observability Layer</div>
+        <div class="gc-role">情報閲覧履歴を SRE 的に蓄積・可視化</div>
+      </div>
+      <div class="gc c2">
+        <div class="gc-svc">Cloud Monitoring</div>
+        <div class="gc-en">Metrics &amp; Alerting</div>
+        <div class="gc-role">信頼度メトリクス収集・異常アラート発報</div>
+      </div>
+      <div class="gc c3">
+        <div class="gc-svc">Vertex AI Gemini</div>
+        <div class="gc-en">2.5-flash / temp=0.0 / seed=42 / top_k=1</div>
+        <div class="gc-role">3エージェント共通推論基盤</div>
+      </div>
+      <div class="gc c4">
+        <div class="gc-svc">Firestore</div>
+        <div class="gc-en">Cache + Vector Search + Source Dict</div>
+        <div class="gc-role">同一入力一致保証 / 信頼辞書125件 / 履歴</div>
+      </div>
+      <div class="gc c5">
+        <div class="gc-svc">Cloud Build</div>
+        <div class="gc-en">CI/CD — cloudbuild.yaml</div>
+        <div class="gc-role">信頼ソース Git 管理 → 自動 re-deploy</div>
+      </div>
+      <div class="gc c6">
+        <div class="gc-svc">Cloud Run</div>
+        <div class="gc-en">min-instances=1 / asia-northeast1</div>
+        <div class="gc-role">FastAPI実行基盤・コールドスタート抑制</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SVG矢印
+    座標系は 1097×617 (論理px)
+    入口右端 x=158
+    entry c1中心y=243, c2=322, c3=401
+    エージェント左端x=178, 中心x=304
+    ag c1中心y=214, c2=322, c3=424  (175+39=214, +78+24=316→+39=355, wait)
+    実際: top=175
+      c1: 175〜253 → 中心=214
+      arr: 253〜277
+      c2: 277〜355 → 中心=316
+      arr: 355〜379
+      c3: 379〜457 → 中心=418
+    GCP left=450
+    gcp-zone top=84, ラベル行=8+8=16 → grid top=84+16+8=108
+      row1: 108〜170 → 中心=139
+      row2: 108+62+10=180〜242 → 中心=211
+      row3: 108+124+20=252〜314 → 中心=283
+  -->
+  <svg class="arr-svg" viewBox="0 0 1097 617"
+       xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ag" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L6,3 z" fill="#2D5A40"/>
+      </marker>
+      <marker id="ao" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L6,3 z" fill="#8B3A2E"/>
+      </marker>
+      <marker id="am" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L6,3 z" fill="#9A9480"/>
+      </marker>
+    </defs>
+
+    <!-- 入口 → Watcher (エージェントc1中心y=214) -->
+    <path d="M 158 243 C 168 243 168 214 178 214"
+          stroke="#2D5A40" stroke-width="1.5" fill="none" marker-end="url(#ag)" opacity="0.8"/>
+    <path d="M 158 322 C 170 322 170 214 178 214"
+          stroke="#2D5A40" stroke-width="1.5" fill="none" marker-end="url(#ag)" opacity="0.7"/>
+    <path d="M 158 401 C 170 401 170 214 178 214"
+          stroke="#2D5A40" stroke-width="1.5" fill="none" marker-end="url(#ag)" opacity="0.6"/>
+
+    <!-- エージェント右端 → GCP左端 -->
+    <!-- Watcher(y=214) → Cloud Logging(y=139) -->
+    <path d="M 430 214 C 440 214 440 139 450 139"
+          stroke="#2D5A40" stroke-width="2" fill="none" marker-end="url(#ag)" opacity="0.85"/>
+    <!-- Investigator(y=316) → Vertex AI(y=211) -->
+    <path d="M 430 316 C 440 316 440 211 450 211"
+          stroke="#2D5A40" stroke-width="2" fill="none" marker-end="url(#ag)" opacity="0.85"/>
+    <!-- Validator(y=418) → Cloud Build/Run(y=283) -->
+    <path d="M 430 418 C 440 418 440 283 450 283"
+          stroke="#2D5A40" stroke-width="2" fill="none" marker-end="url(#ag)" opacity="0.85"/>
+
+    <!-- Observabilityフィードバックループ（上部弧） -->
+    <path d="M 790 120 C 790 54 304 54 304 167"
+          stroke="#8B3A2E" stroke-width="1.2" fill="none"
+          stroke-dasharray="5,3" marker-end="url(#ao)" opacity="0.45"/>
+    <text x="547" y="46" text-anchor="middle"
+          font-family="'Hiragino Sans','Yu Gothic',sans-serif"
+          font-size="8" fill="#8B3A2E" opacity="0.55" letter-spacing="3">
+      OBSERVABILITY FEEDBACK LOOP
+    </text>
+
+    <!-- Firestoreキャッシュ → エージェント下部弧 -->
+    <path d="M 787 254 C 787 490 304 490 304 465"
+          stroke="#9A9480" stroke-width="1.2" fill="none"
+          stroke-dasharray="5,3" marker-end="url(#am)" opacity="0.35"/>
+    <text x="546" y="510" text-anchor="middle"
+          font-family="'Hiragino Sans','Yu Gothic',sans-serif"
+          font-size="7.5" fill="#9A9480" opacity="0.45" letter-spacing="2">
+      CACHE HIT / 同一入力一致保証
+    </text>
+  </svg>
+
+  <!-- 下部DevOpsバー -->
+  <div class="devbar">
+    <div class="devbar-rule"></div>
+    <div class="devbar-row">
+      <div class="dbi">
+        <div class="dbi-name">OBSERVABILITY</div>
+        <div class="dbi-desc">Cloud Logging/Monitoring<br>情報の障害を SRE 的に予兆検知</div>
+      </div>
+      <div class="dbi">
+        <div class="dbi-name">CI / CD</div>
+        <div class="dbi-desc">信頼ソース Git 管理<br>Cloud Build → 自動 re-deploy</div>
+      </div>
+      <div class="dbi">
+        <div class="dbi-name">SRE</div>
+        <div class="dbi-desc">「真実の SRE エージェント」<br>誤情報を障害として予兆検知</div>
+      </div>
+      <div class="dbi">
+        <div class="dbi-name">POSTMORTEM</div>
+        <div class="dbi-desc">警告履歴を Blameless 形式で<br>Firestore に記録 → 再発防止</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DeepFact Validator — 実機検証エビデンス v0.2</title>
+<meta name="viewport" content="width=1280">
+<style>
+  :root {
+    --color-paper: #F8F6F1;
+    --color-ink: #1B2A4E;
+    --color-gold: #A38440;
+    --color-gold-deep: #8a6f33;
+    --color-cream: #FFFFFF;
+    --color-shadow: rgba(27, 42, 78, 0.08);
+    --font-mincho: "Shippori Mincho", "Yu Mincho", serif;
+    --font-mono: "JetBrains Mono", "Courier New", monospace;
+    --font-sans: "Inter", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); line-height: 1.6; padding: 60px 80px; }
+  header { border-bottom: 2px solid var(--color-ink); padding-bottom: 32px; margin-bottom: 48px; }
+  header .brand { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
+  header h1 { font-family: var(--font-mincho); font-size: 44px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+  header h1 .accent { color: var(--color-gold-deep); }
+  header .lead { font-size: 17px; color: rgba(27, 42, 78, 0.78); max-width: 800px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 56px; }
+  .verdict-table { width: 100%; border-collapse: collapse; background: var(--color-cream); box-shadow: 0 4px 16px var(--color-shadow); border-radius: 4px; overflow: hidden; }
+  .verdict-table th, .verdict-table td { padding: 16px 20px; text-align: left; border-bottom: 1px solid rgba(27, 42, 78, 0.08); }
+  .verdict-table thead th { background: var(--color-ink); color: var(--color-paper); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+  .verdict-table tbody tr:last-child td { border-bottom: none; }
+  .verdict-table tbody tr:hover { background: rgba(163, 132, 64, 0.04); }
+  .label-badge { display: inline-block; padding: 4px 12px; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .label-high { background: #0e6e3a; color: #fff; }
+  .label-mid { background: #c9a55c; color: #1B2A4E; }
+  .label-low { background: #cf8b3a; color: #fff; }
+  .label-warn { background: #b03939; color: #fff; }
+  .score-cell { font-family: var(--font-mono); font-weight: 700; font-size: 18px; }
+  .score-cell.high { color: #0e6e3a; }
+  .score-cell.warn { color: #b03939; }
+  .score-bar { display: inline-block; height: 6px; background: var(--color-gold); border-radius: 2px; vertical-align: middle; margin-left: 8px; max-width: 100px; }
+  section h2 { font-family: var(--font-mincho); font-size: 28px; font-weight: 700; margin-bottom: 24px; border-left: 4px solid var(--color-gold); padding-left: 16px; }
+  section { margin-bottom: 56px; }
+  .observation-card { background: var(--color-cream); padding: 24px; border-radius: 4px; box-shadow: 0 2px 8px var(--color-shadow); margin-bottom: 16px; }
+  .observation-card .obs-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .observation-card .obs-name { font-family: var(--font-mincho); font-size: 18px; font-weight: 700; }
+  .observation-card ul { list-style: none; padding-left: 0; }
+  .observation-card li { padding: 8px 0 8px 24px; position: relative; font-size: 14.5px; color: rgba(27, 42, 78, 0.85); border-bottom: 1px dashed rgba(27, 42, 78, 0.08); }
+  .observation-card li:last-child { border-bottom: none; }
+  .observation-card li::before { content: "▸"; position: absolute; left: 4px; color: var(--color-gold); }
+  .delta-callout { background: var(--color-ink); color: var(--color-paper); padding: 36px 48px; border-radius: 4px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-bottom: 48px; }
+  .delta-callout .figure { font-family: var(--font-mono); font-size: 56px; font-weight: 700; color: var(--color-gold); text-align: center; }
+  .delta-callout .desc { font-family: var(--font-mincho); font-size: 17px; line-height: 1.7; }
+  .delta-callout .label { font-family: var(--font-mono); font-size: 11px; color: var(--color-gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .arch-pipeline { background: var(--color-cream); padding: 32px; border-radius: 4px; box-shadow: 0 2px 8px var(--color-shadow); }
+  .arch-row { display: grid; grid-template-columns: 200px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px dashed rgba(27, 42, 78, 0.1); align-items: baseline; }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-row .tier { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold-deep); font-weight: 700; }
+  .arch-row .content { font-size: 15px; color: rgba(27, 42, 78, 0.92); }
+  .arch-row .content strong { color: var(--color-ink); font-weight: 700; }
+  footer { margin-top: 64px; padding-top: 32px; border-top: 1px solid rgba(27, 42, 78, 0.15); font-size: 13px; color: rgba(27, 42, 78, 0.6); display: flex; justify-content: space-between; align-items: center; }
+  footer .timestamp { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">DeepFact Validator · Pitch Supplement v0.2 · 2026-06-19</div>
+  <h1>「動く」と称する前に証拠を出す<br><span class="accent">実機検証エビデンス 6 パターン</span></h1>
+  <p class="lead">
+    マルチエージェント（Watcher → Investigator → Validator）× Gemini 2.5-flash 本実装の入力差テスト結果。
+    フェイク主張・公的一次情報・中立報道・誇張広告・陰謀論型・学術的論調 の 6 パターンで信頼度スコアに有意な差が出るかを機械検証した。
+  </p>
+</header>
+
+<section>
+  <h2>判定スコア 4 パターン</h2>
+  <table class="verdict-table">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>入力パターン</th>
+        <th>判定</th>
+        <th>総合</th>
+        <th>出所信頼度</th>
+        <th>中立性</th>
+        <th>事実整合性</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td>フェイク主張<br><small>「証拠は示されていないがジェノサイドが起きていると主張」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">20%</td>
+        <td>0.50</td>
+        <td>0.00</td>
+        <td>0.00</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td>公的一次情報<br><small>厚生労働省 mhlw.go.jp の医療制度ページ URL</small></td>
+        <td><span class="label-badge label-high">高</span></td>
+        <td class="score-cell high">96%</td>
+        <td>0.95</td>
+        <td>0.95</td>
+        <td>0.98</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td>中立報道風<br><small>医療制度改革・賛否両論併記の客観文</small></td>
+        <td><span class="label-badge label-mid">中</span></td>
+        <td class="score-cell">50%</td>
+        <td>0.50</td>
+        <td>0.50</td>
+        <td>0.50</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td>誇張広告<br><small>「3 日でガン消失！すべての癌に効くサプリ」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">20%</td>
+        <td>0.50</td>
+        <td>0.00</td>
+        <td>0.00</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td>陰謀論型フェイク<br><small>「ワクチンの真実が暴露された／拡散してください」</small></td>
+        <td><span class="label-badge label-warn">警告</span></td>
+        <td class="score-cell warn">26%</td>
+        <td>0.50</td>
+        <td>0.10</td>
+        <td>0.10</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td>学術的論調<br><small>糖質制限・系統的レビューに言及・AHA推奨を引用</small></td>
+        <td><span class="label-badge label-mid">中</span></td>
+        <td class="score-cell">59%</td>
+        <td>0.50</td>
+        <td>0.60</td>
+        <td>0.70</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="delta-callout">
+  <div>
+    <div class="label">Maximum Delta</div>
+    <div class="desc">信頼度の振れ幅（96% vs 20%）。<br>同じ Bot が入力ごとに有意に異なる判定を返す。<br>「Hello World と同じスコア問題」は完全解消。</div>
+  </div>
+  <div class="figure">76 pt</div>
+  <div>
+    <div class="label">6 patterns tested</div>
+    <div class="desc">高・中・警告の 3 ラベルに<br>適切に分布。<br>陰謀論型／学術型／煽動型を識別。</div>
+  </div>
+</div>
+
+<section>
+  <h2>構造観察の質（抜粋）</h2>
+  <div class="grid-2">
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-warn">フェイク主張</span>
+        <span class="obs-name">論理的飛躍と煽動構造</span>
+      </div>
+      <ul>
+        <li>「証拠は示されていないが事実だ」という表現による、論理的飛躍と断定の構造</li>
+        <li>「ジェノサイド」という極めて重い言葉を、証拠なしに断定的に使用する煽動的な構造</li>
+        <li>ウクライナ政府軍を一方的に加害者と断定し、ロシア系住民を被害者と位置づける一方的な視点の構造</li>
+        <li>主張の真偽を独立して確認するための一次情報源が全く示されていない構造</li>
+        <li>論理的思考を停止させ、無条件の受容を促す感情誘導的な表現</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-warn">誇張広告</span>
+        <span class="obs-name">商業的煽動と権威の曖昧化</span>
+      </div>
+      <ul>
+        <li>「感情を煽る表現」: 読者の期待や不安を強く刺激する構造</li>
+        <li>「一方的な断定」: 効果や安全性を絶対的に保証する構造</li>
+        <li>「緊急性を強調する表現」: 即時購入を促す限定性／割引を強調する構造</li>
+        <li>「権威の曖昧な利用」: 具体的な医師名／所属／研究機関なしに権威を漠然と利用する構造</li>
+        <li>「批判的視点の欠如」: 異なる意見や潜在的なリスク／科学的根拠に関する情報が一切提示されていない構造</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-high">公的一次情報</span>
+        <span class="obs-name">中立的情報提供の構造</span>
+      </div>
+      <ul>
+        <li>厚生労働省（既知信頼度 0.95 / カテゴリ: government_jp）に分類される構造</li>
+        <li>ウェブサイトの技術的要件と利用方法に関する情報提供に特化する構造</li>
+        <li>特定の政策や主張に対する意見表明を一切含まない構造</li>
+        <li>機械翻訳の限界を明示することで、誤解を防ぐための構造</li>
+        <li>提示された主張は、すべてユーザーが直接検証可能な内容である</li>
+      </ul>
+    </div>
+    <div class="observation-card">
+      <div class="obs-head">
+        <span class="label-badge label-mid">中立報道風</span>
+        <span class="obs-name">両論併記と参照不在の併存</span>
+      </div>
+      <ul>
+        <li>発信元の信頼性が不明瞭な構造</li>
+        <li>一次情報源への直接的な参照が欠如する構造</li>
+        <li>論調が中立性を保とうとする構造</li>
+        <li>事実の検証可能性が中程度に留まる構造</li>
+        <li>複数の関係団体の賛否両論を併記する構造</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>アーキテクチャ（v0.2 本実装）</h2>
+  <div class="arch-pipeline">
+    <div class="arch-row">
+      <div class="tier">ENTRY</div>
+      <div class="content"><strong>LINE Bot（Messaging API）／ Chrome Extension（Manifest V3）／ HTTP API</strong> ＝ 3 経路から同一 Cloud Run へ集約</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">RUNTIME</div>
+      <div class="content"><strong>Cloud Run + FastAPI</strong> ＝ サーバーレス・min-instances=1・max=10・Secret Manager 連携</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 1 — Watcher</div>
+      <div class="content">入力テキスト／URL から記事タイトル・要約・主張・<strong>感情強度</strong>・出典 URL を Gemini で構造抽出</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 2 — Investigator</div>
+      <div class="content">発信元辞書（信頼ソース 30+）× Gemini で <strong>論調バイアス（0-1）</strong> ／ <strong>事実整合性（0-1）</strong> ／ 対立見解 ／ 要警戒構造を判定</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">AGENT 3 — Validator</div>
+      <div class="content">数値統合（重み付き加算）＋ Gemini で<strong>自然言語の構造観察レポート</strong>生成（人ではなく構造を見る原則）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">DATA</div>
+      <div class="content">Firestore（信頼ソース辞書／警告履歴）＋ Vertex Vector Search（Phase 3 で過去類似主張照合）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">OBSERVE</div>
+      <div class="content">Cloud Logging — 全判定をログ蓄積＋直近 24h Postmortem 自動生成（SRE 流振り返り）</div>
+    </div>
+    <div class="arch-row">
+      <div class="tier">SDK</div>
+      <div class="content"><strong>google-genai 1.x</strong>（旧 google-generativeai は 2025-11-30 で deprecated）／ <strong>Gemini 2.5-flash</strong> / 新形式 auth key (AQ.Ab～) 対応</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>構造分析の規律</h2>
+  <div class="observation-card">
+    <ul>
+      <li>すべての観察文は「○○という構造」「○○の傾向」形式で人物・組織を断定しない</li>
+      <li>政治的・宗教的に微妙な主張には必ず「複数の立場が成り立つ構造」を contrarian_views で提示</li>
+      <li>「📚 情報の真偽判断は一次情報まで遡ることを推奨します」を全レポートに常設</li>
+      <li>北極星 = 社長の信条「真偽は一次情報まで辿る」を AI Agent で社会拡張する設計</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div>DeepFact Validator — Pitch Supplement v0.2 · 株式会社Liberaiz</div>
+  <div class="timestamp">Verified 2026-06-19 23:35 JST · Cloud Run revision deepfact-validator-00005</div>
+</footer>
+
+</body>
+</html>
