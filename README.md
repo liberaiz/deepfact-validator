@@ -5,6 +5,10 @@
 
 **DevOps × AI Agent Hackathon 2026 応募プロダクト**（Findy／Google Cloud Japan協賛・締切 2026-07-10）
 
+- 📦 **GitHub**: https://github.com/liberaiz/deepfact-validator
+- 🚀 **Live**: https://deepfact-validator-kjciocymea-an.a.run.app
+- 🔄 **CI/CD**: [![validate-trust-sources](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)
+
 ---
 
 ## なぜ作るか
