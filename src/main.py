@@ -57,7 +57,12 @@ from src.observability import (
     new_request_id,
     request_context,
 )
-from src.orchestrator import AnalyzeInput, run_analyze_pipeline
+from src.orchestrator import (
+    AnalysisUnavailableError,
+    AnalyzeInput,
+    FALLBACK_USER_MESSAGE,
+    run_analyze_pipeline,
+)
 from src.tools.observability import (
     WarningRecord,
     generate_postmortem,
@@ -83,7 +88,7 @@ app = FastAPI(
         "情報のObservability=ニュース/SNSの信頼度+利害関係をリアルタイム可視化する"
         "マルチエージェント・ブラウザ拡張+LINE Bot。内部コード名: deepfact-validator"
     ),
-    version="1.1.4",
+    version="1.1.5",
 )
 
 # 🛡️ Rate Limiter (Economic DoS 対策・Critical C3)
@@ -303,7 +308,7 @@ async def _warmup() -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     """ヘルスチェック."""
-    return {"status": "ok", "version": "1.1.4"}
+    return {"status": "ok", "version": "1.1.5"}
 
 
 @app.get("/")
@@ -311,7 +316,7 @@ async def root() -> dict:
     """簡易ステータスページ."""
     return {
         "name": "DeepFact Validator",
-        "version": "1.1.4",
+        "version": "1.1.5",
         "entry_points": {
             "chrome_extension": "/api/analyze",
             "line_bot": "/webhook/line",
@@ -370,9 +375,33 @@ async def analyze(request: Request, req: AnalyzeRequest) -> AnalyzeResponse:
                 stage="cache_lookup",
             )
 
-        with Timer() as pipeline_t:
-            response = await _run_orchestrator(
-                req.payload, req.user_context, input_type=req.input_type
+        try:
+            with Timer() as pipeline_t:
+                response = await _run_orchestrator(
+                    req.payload, req.user_context, input_type=req.input_type
+                )
+        except AnalysisUnavailableError as e:
+            # 🆕 v1.1.5 メティス V29 致命#2 対策:
+            # Watcher / Investigator / Validator が fallback 状態のとき、
+            # 「中 50%」固定値を返さず HTTP 503 でエラーメッセージを返す。
+            log_event(
+                EVENT_ERROR,
+                severity=SEVERITY_WARNING,
+                message="Analysis engine unavailable (fallback gate triggered)",
+                stage=getattr(e, "stage", "unknown"),
+                error_state=getattr(e, "error_state", None) or "",
+                input_type=req.input_type,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "analysis_unavailable",
+                    "message": e.user_message,
+                    "stage": getattr(e, "stage", "unknown"),
+                    "error_state": getattr(e, "error_state", None) or "",
+                    "retry_after_sec": 30,
+                },
+                headers={"Retry-After": "30"},
             )
 
         # 🆕 Validator 結果イベント（ログベースメトリクスの中核）
@@ -621,6 +650,31 @@ if _line_handler is not None:
                         )],
                     )
                 )
+        except AnalysisUnavailableError as e:
+            # 🆕 v1.1.5 メティス V29 致命#2 対策:
+            # Watcher/Investigator/Validator が fallback したとき、LINE Push で
+            # 「分析エンジン混雑」メッセージを送る（「中 50%」固定値の返却を防ぐ）。
+            logger.warning(
+                "LINE: AnalysisUnavailableError stage=%s state=%s",
+                getattr(e, "stage", "unknown"),
+                getattr(e, "error_state", None),
+            )
+            try:
+                with ApiClient(_line_config) as api_client:  # type: ignore[arg-type]
+                    line_api = MessagingApi(api_client)
+                    line_api.push_message(
+                        PushMessageRequest(
+                            to=user_id,
+                            messages=[TextMessage(
+                                text=(
+                                    "⌛ " + e.user_message + "\n"
+                                    "（30秒〜数分後にもう一度お試しください）"
+                                )
+                            )],
+                        )
+                    )
+            except Exception:
+                logger.exception("LINE fallback-push failed")
         except Exception:
             logger.exception("LINE background processing failed")
             try:
