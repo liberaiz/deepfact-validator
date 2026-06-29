@@ -192,7 +192,7 @@
 - [ ] アーキテクチャ図を Proto Pedia 用にスタンドアロン化（demo-evidence v0.3 から切出）
 - [ ] 「素の Gemini で代替不可」5 基準を Proto Pedia 概要で明示
 - [ ] 既存サービスとの差別化表（NewsGuard / Ground News / AllSides / ChatGPT 比較）を Proto Pedia に組込
-- [x] Chrome Extension Phase 2 実装完了（DOM オーバーレイ常駐 + MutationObserver + SPA URL hook + popup 経由単発分析）— 「突き抜けた体験価値」加点狙い・要デプロイ稼働確認
+- [x] Chrome Extension v1.1.7 実装完了（浮遊バッジ → ワンクリック overlay 展開・手動トリガー方式・閉鎖24h記憶 localStorage・HITL UI 内蔵）+ Web UI Workbench v1.1.7 実機実装（`/workbench/` 同オリジン serve・サンプル chip 4種・HITL UI 内蔵）— 「突き抜けた体験価値」加点狙い・実機稼働確認済
 - [ ] 二次審査通過時の **8/19 渋谷登壇プレゼン資料** 雛形を提出時点で着手済
 
 ---

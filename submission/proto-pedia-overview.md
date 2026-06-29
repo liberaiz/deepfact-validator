@@ -62,8 +62,8 @@
 ### 3 つの利用エントリ
 
 1. **LINE Bot**: 友達追加だけで URL/テキスト送信 → 信頼度 + 判定エビデンス URL を 🚨/⚠️/〽️/✅ アイコン付きで即返信
-2. **Chrome Extension（Manifest V3）**: 閲覧中のページに常時介入・DOM オーバーレイで信頼度メーターと構造観察を表示
-3. **Web UI Workbench**: 3 エージェントの判定を一画面で精査するダッシュボード
+2. **Chrome Extension（Manifest V3）**: 閲覧中のページに**浮遊バッジ**（右下・閉鎖 24h 記憶 localStorage）→ ワンクリックで overlay 展開・信頼度メーターと構造観察を表示。誤判定はその場で HITL フィードバック送信
+3. **Web UI Workbench**: ブラウザで `/workbench/` を開くだけで使える 2ペイン・dashboard。URL or テキストを直接貼り付け or サンプル chip 4種でワンクリック検証。3エージェントの判定（メーター・構造観察・一次情報・判定エビデンス）を一画面で精査・誤判定 HITL フィードバック送信。実稼働URL: `https://deepfact-validator-kjciocymea-an.a.run.app/workbench/`
 
 ### 既存サービスとの差別化
 
@@ -90,7 +90,7 @@
 - **データ**: Firestore（信頼ソース辞書・警告履歴・response cache・記事 embedding）
 - **Observability**: Cloud Logging 構造化ログ × 8 ログベースメトリクス（unknown_rate / cache_hit_rate / p95_latency / error_rate ほか）× 4 アラートポリシー（Cloud Monitoring）
 - **CI/CD パイプライン**: 信頼ソース辞書 YAML → GitHub Actions validate（yamllint + schema/range/enum/duplicate + smoke load test）→ Cloud Build → Cloud Run auto-deploy（badge: [![validate](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)）
-- **フロント**: LINE Bot（実装済・稼働中）/ Chrome Extension（Manifest V3・Phase 2 実装済）/ Web UI Workbench
+- **フロント**: LINE Bot（実装済・稼働中）/ Chrome Extension（Manifest V3・v1.1.7 浮遊バッジ手動トリガー方式・HITL UI 内蔵）/ Web UI Workbench（v1.1.7 で実機実装・`/workbench/` 同オリジン serve・HITL UI 内蔵）
 
 ### 法的リスク対策
 

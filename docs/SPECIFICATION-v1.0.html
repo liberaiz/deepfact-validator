@@ -189,8 +189,8 @@
 <h3>3つの利用エントリ</h3>
 <ol>
   <li><strong>LINE Bot</strong>：友達追加だけで URL/テキスト送信 → 信頼度＋判定エビデンスURL を 🚨/⚠️/〽️/✅ アイコン付きで即返信</li>
-  <li><strong>Chrome Extension（Manifest V3）</strong>：閲覧中ページに常時介入・DOMオーバーレイで信頼度メーターと構造観察を表示</li>
-  <li><strong>Web UI Workbench</strong>：3エージェントの判定を一画面で精査するダッシュボード</li>
+  <li><strong>Chrome Extension（Manifest V3・v1.1.7）</strong>：閲覧中ページに<strong>浮遊バッジ</strong>（右下・閉鎖 24h 記憶 localStorage）→ ワンクリックで overlay 展開・信頼度メーターと構造観察を表示・誤判定 HITL フィードバック送信</li>
+  <li><strong>Web UI Workbench（v1.1.7）</strong>：ブラウザで <code>/workbench/</code> を開くだけで使える 2ペイン dashboard。URL or テキストを直接貼り付け or サンプル chip 4種でワンクリック検証。3エージェントの判定（メーター・構造観察・一次情報・判定エビデンス）を一画面で精査。実稼働URL: <code>https://deepfact-validator-kjciocymea-an.a.run.app/workbench/</code></li>
 </ol>
 
 <h2><span class="num">SECTION 04</span>信頼度スコアリングロジック</h2>

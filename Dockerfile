@@ -17,6 +17,8 @@ COPY src/ ./src/
 # Loaded at app start; absence falls back to hardcoded dicts inside the agents but
 # defeats the GitHub Actions → Cloud Build → Cloud Run YAML pipeline, so we ship them.
 COPY config/ ./config/
+# Web UI Workbench (v1.1.7: popup 廃止後の主入口・/workbench で StaticFiles 配信).
+COPY web-ui/ ./web-ui/
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import httpx; r = httpx.get('http://localhost:8080/health'); exit(0 if r.status_code == 200 else 1)"

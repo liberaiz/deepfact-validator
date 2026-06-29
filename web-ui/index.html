@@ -1,0 +1,192 @@
+<!--
+  DeepFact Validator — Web UI Workbench (v1.1.7)
+  Hallmark · macrostructure: Workbench · tone: editorial-workbench · anchor hue: navy + warm-gold
+  Genre: editorial · Theme: Salon-adapted (roman serif + warm paper + gold accent)
+  Liberaiz: 紺×ゴールド×紙 Brand Soul / Anti-AI-slop redesign
+  Implemented from mockup/web-ui-mockup-v0.3.html (popup-less architecture transplant).
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepFact Validator — 情報のObservability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="workbench.css">
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">DeepFact Validator</span>
+    <span class="brand-jp">情報のObservability</span>
+  </div>
+  <div class="masthead-tagline">人を攻撃しない 構造を可視化する</div>
+  <div class="masthead-meta">
+    <span><span class="dot-live"></span>稼働中</span>
+    <span>v1.1.7</span>
+  </div>
+</header>
+
+<!-- WORKBENCH -->
+<main class="workbench">
+
+  <!-- LEFT · Compose -->
+  <section class="compose">
+    <div class="compose-heading">
+      <h1 class="compose-h">記事を解析する</h1>
+      <p class="compose-sub">URL かテキストを置くと、Watcher・Investigator・Validator の三体が並列に走査し、信頼度と判定エビデンスを返します。</p>
+      <div class="compose-rule"></div>
+    </div>
+
+    <div class="compose-field">
+      <span class="compose-label">解析対象</span>
+      <textarea id="compose-input" class="compose-textarea" placeholder="URL を貼るか、検証したいテキストをそのまま置いてください。&#10;&#10;例: https://example.com/article&#10;または記事本文を直接貼り付け。"></textarea>
+    </div>
+
+    <div class="compose-samples">
+      <span class="compose-samples-label">サンプル</span>
+      <div class="sample-chips" id="sample-chips">
+        <button class="sample-chip" data-sample="public">公的データに即した記事</button>
+        <button class="sample-chip" data-sample="experience">体験談ベース</button>
+        <button class="sample-chip" data-sample="emotional">感情訴求型</button>
+        <button class="sample-chip" data-sample="propaganda">プロパガンダ構造</button>
+      </div>
+    </div>
+
+    <div class="compose-actions">
+      <button id="btn-analyze" class="btn-analyze">この記事を解析する</button>
+      <p id="compose-hint" class="compose-hint"></p>
+    </div>
+  </section>
+
+  <div class="divider-v" aria-hidden="true"></div>
+
+  <!-- RIGHT · Report -->
+  <section class="report">
+    <header class="report-head">
+      <h2 class="report-h">判定レポート</h2>
+      <span class="report-status" id="report-status">入力をお待ちしています</span>
+    </header>
+
+    <!-- LOADING -->
+    <div id="loading-block" class="loading-block" style="display: none;">
+      <span class="loading-text">解析中</span><span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="empty-block" class="empty-block">
+      <p class="empty-msg">左ペインで対象を入力し「この記事を解析する」を押してください。</p>
+    </div>
+
+    <!-- RESULT (initially hidden) -->
+    <div id="result-block" class="result-block" style="display: none;">
+
+      <!-- VERDICT (meter + meta) -->
+      <article class="verdict">
+        <div class="verdict-meter">
+          <svg class="verdict-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="meter-track" cx="50" cy="50" r="42" fill="none"></circle>
+            <circle id="meter-progress" class="meter-progress" cx="50" cy="50" r="42" fill="none"></circle>
+          </svg>
+          <div class="meter-center">
+            <span id="meter-label" class="meter-label">—</span>
+          </div>
+        </div>
+        <div class="verdict-meta">
+          <p id="verdict-headline" class="verdict-headline"></p>
+          <div class="verdict-row">
+            <span class="verdict-row-label">信頼度</span>
+            <span id="verdict-score" class="verdict-row-value">—</span>
+            <span id="verdict-icon" class="verdict-row-value icon">—</span>
+          </div>
+          <div class="verdict-row">
+            <span class="verdict-row-label">出所</span>
+            <span id="verdict-source" class="verdict-row-value">—</span>
+          </div>
+          <div class="verdict-row">
+            <span class="verdict-row-label">中立度</span>
+            <span id="verdict-neutral" class="verdict-row-value">—</span>
+          </div>
+          <div class="verdict-row">
+            <span class="verdict-row-label">事実整合性</span>
+            <span id="verdict-fact" class="verdict-row-value">—</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- SUMMARY -->
+      <div class="section-block">
+        <h3 class="section-h">要約</h3>
+        <p id="summary-text" class="summary-quote"></p>
+      </div>
+
+      <!-- STRUCTURAL OBSERVATIONS -->
+      <div class="section-block">
+        <h3 class="section-h">構造観察</h3>
+        <ul id="obs-list" class="obs-list"></ul>
+      </div>
+
+      <!-- PRIMARY SOURCES -->
+      <div class="section-block">
+        <h3 class="section-h">一次情報候補</h3>
+        <ul id="primary-list" class="primary-list"></ul>
+      </div>
+
+      <!-- EVIDENCE SOURCES (asymmetric stack) -->
+      <div class="section-block" id="evidence-section" style="display: none;">
+        <h3 class="section-h">判定エビデンス・ソース</h3>
+        <div id="evidence-stack" class="evidence-stack"></div>
+      </div>
+
+      <!-- HITL FEEDBACK LINK -->
+      <div class="feedback-link-wrap">
+        <a id="feedback-link" class="feedback-link" href="#">この判定は誤りですか？ フィードバックする →</a>
+      </div>
+
+    </div>
+
+  </section>
+</main>
+
+<!-- HITL FEEDBACK MODAL (3-choice — overlay と同じ構造) -->
+<div id="feedback-modal" class="feedback-modal" style="display: none;">
+  <div class="fb-backdrop"></div>
+  <div class="fb-dialog" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div class="fb-head">
+      <span class="fb-title" id="fb-title">この判定について</span>
+      <span class="fb-close" title="閉じる">×</span>
+    </div>
+    <div class="fb-body">
+      <p class="fb-question">この判定について、どう感じましたか？</p>
+      <div class="fb-options">
+        <button class="fb-opt" data-verdict="misjudge">✓ 誤判定だと思う</button>
+        <button class="fb-opt" data-verdict="warning_correct">警告は正しい</button>
+        <button class="fb-opt" data-verdict="unsure">よくわからない</button>
+      </div>
+      <p class="fb-note">フィードバックは匿名で記録されます。信頼ソース辞書の継続的改善（CI/CD）に使用されます。</p>
+      <p class="fb-done" style="display:none;">フィードバックを送信しました。ありがとうございます。</p>
+    </div>
+  </div>
+</div>
+
+<!-- COLOPHON -->
+<footer class="colophon">
+  <div class="colophon-left">
+    <span class="colophon-brand">DeepFact Validator</span>
+    <span class="colophon-jp">株式会社 Liberaiz</span>
+  </div>
+  <div class="colophon-entries">
+    <span>Web</span>
+    <span>Chrome 拡張</span>
+    <span>LINE Bot</span>
+    <span>Vertex AI Gemini 2.5 Flash</span>
+  </div>
+</footer>
+
+<script src="workbench.js"></script>
+</body>
+</html>

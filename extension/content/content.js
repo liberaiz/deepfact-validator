@@ -1,11 +1,13 @@
-/* DeepFact Validator content script — Phase 2
+/* DeepFact Validator content script — Phase 2 / v1.1.7 浮遊バッジ方式
  * 役割:
- *   - 開いたページの URL を検知（SPA 対応: pushState/replaceState/popstate + MutationObserver）
- *   - 記事相当のコンテンツ量があれば DeepFact API に投げて構造分析
- *   - 結果を右上のオーバーレイに常駐表示
+ *   - ページロード時に右下隅に浮遊バッジ（DF）を表示（24h 閉鎖記憶あり）
+ *   - バッジクリック → overlay 展開 + DeepFact API に投げて構造分析
+ *   - 結果を右上のオーバーレイに表示
  *   - ユーザーは ✕ で閉じる・popup から「再分析」できる
+ *   - HITL フィードバック（feedback link + 3択モーダル）は v1.1.6 から無傷で維持
  *
- * 「リアルタイム能動介入」＝ユーザーが質問を投げる前に AI Agent から構造を可視化する
+ * v1.1.7 変更点: auto-trigger（pushState/replaceState/popstate hook + checkUrlChange）を完全削除
+ * 起動方式: 浮遊バッジクリックでのみ analyze 開始（誤判定リスク低減・社長承認2026-06-30）
  */
 (function () {
   if (window.__deepfactInjected) return;
@@ -13,13 +15,12 @@
 
   const API_DEFAULT = "https://deepfact-validator-kjciocymea-an.a.run.app";
   const COOLDOWN_MS = 5000;
-  const MIN_BODY_LENGTH = 600;
-  const DEBOUNCE_MS = 800;
+  const BADGE_CLOSED_STORAGE_KEY = "deepfact_badge_closed_until";
+  const BADGE_CLOSED_DURATION_MS = 24 * 60 * 60 * 1000; // 24h
 
-  let currentUrl = null;
   let overlay = null;
+  let floatingBadge = null;
   let lastAnalyzeAt = 0;
-  let debounceTimer = null;
   // HITL フィードバック: analyze 結果に紐付ける context（動画 F5/F6 で見せている UX）
   let lastRequestId = null;
   let lastAnalyzeContext = null; // { url_or_text, score, label }
@@ -355,16 +356,6 @@
     }
   }
 
-  function isLikelyArticle() {
-    if (!document.body) return false;
-    const textLen = (document.body.innerText || "").length;
-    if (textLen < MIN_BODY_LENGTH) return false;
-    // 検索結果ページ・ホーム・SPA ローディング状態は除外
-    const path = location.pathname;
-    if (path === "/" || path === "" || path === "/index.html") return false;
-    return true;
-  }
-
   async function analyzeCurrentPage(force) {
     const url = location.href;
     if (!url || url.startsWith("chrome://") || url.startsWith("about:")) return;
@@ -376,7 +367,8 @@
     const { endpoint, enabled } = await getConfig();
     if (!enabled) return;
 
-    if (!isLikelyArticle()) return;
+    // v1.1.7 ノート: isLikelyArticle() チェックは削除（手動トリガーなので記事判定不要）
+    // ユーザーがバッジを押した時点で「このページを分析したい」という意思表示として扱う
 
     setStatus("分析中...");
 
@@ -391,55 +383,91 @@
         return;
       }
       const data = await resp.json();
-      renderResult(data);
+      renderResult(data, url);
     } catch (e) {
       setStatus("通信失敗");
     }
   }
 
-  function checkUrlChange() {
-    const url = location.href;
-    if (url === currentUrl) return;
-    currentUrl = url;
-    // SPA 遷移後のレンダリング待ちを兼ねたデバウンス
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => analyzeCurrentPage(false), DEBOUNCE_MS);
+  // === 浮遊バッジ（v1.1.7 で auto-trigger を置き換え） ===
+  function isBadgeClosedNow() {
+    try {
+      const until = localStorage.getItem(BADGE_CLOSED_STORAGE_KEY);
+      if (!until) return false;
+      const untilMs = Date.parse(until);
+      if (Number.isNaN(untilMs)) {
+        // 壊れた値は掃除する
+        localStorage.removeItem(BADGE_CLOSED_STORAGE_KEY);
+        return false;
+      }
+      if (Date.now() >= untilMs) {
+        // 24h 経過 → 自動リセット
+        localStorage.removeItem(BADGE_CLOSED_STORAGE_KEY);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      // localStorage 不可（プライベートブラウジング等）→ 常に表示
+      return false;
+    }
   }
 
-  // SPA history API hook
-  const origPush = history.pushState;
-  history.pushState = function () {
-    origPush.apply(this, arguments);
-    setTimeout(checkUrlChange, 200);
-  };
-  const origReplace = history.replaceState;
-  history.replaceState = function () {
-    origReplace.apply(this, arguments);
-    setTimeout(checkUrlChange, 200);
-  };
-  window.addEventListener("popstate", () => setTimeout(checkUrlChange, 200));
+  function markBadgeClosed() {
+    try {
+      const until = new Date(Date.now() + BADGE_CLOSED_DURATION_MS).toISOString();
+      localStorage.setItem(BADGE_CLOSED_STORAGE_KEY, until);
+    } catch (e) {
+      // localStorage 不可時は記憶せず（次回も表示される）
+    }
+  }
 
-  // 動的更新検知 (lightweight: 1.5s デバウンスで再評価)
-  let observerTimer = null;
-  const observer = new MutationObserver(() => {
-    if (observerTimer) return;
-    observerTimer = setTimeout(() => {
-      observerTimer = null;
-      checkUrlChange();
-    }, 1500);
-  });
-  if (document.documentElement) {
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
+  function ensureFloatingBadge() {
+    if (floatingBadge && document.documentElement.contains(floatingBadge)) return floatingBadge;
+    floatingBadge = document.createElement("div");
+    floatingBadge.id = "deepfact-floating-badge";
+    floatingBadge.setAttribute("role", "button");
+    floatingBadge.setAttribute("aria-label", "DeepFact Validator — このページの信頼度を分析");
+    floatingBadge.setAttribute("title", "DeepFact Validator");
+    floatingBadge.innerHTML = [
+      '<span class="df-fb-badge-icon">DF</span>',
+      '<span class="df-fb-badge-close" title="24時間 非表示">×</span>',
+    ].join("");
+    document.documentElement.appendChild(floatingBadge);
+
+    // バッジ本体クリック → 分析開始
+    floatingBadge.addEventListener("click", (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains("df-fb-badge-close")) return;
+      hideFloatingBadge(/* persist */ false);
+      analyzeCurrentPage(true);
     });
+
+    // × クリック → バッジ非表示 + 24h 閉鎖記憶
+    const closeBtn = floatingBadge.querySelector(".df-fb-badge-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        markBadgeClosed();
+        hideFloatingBadge(/* persist */ true);
+      });
+    }
+    return floatingBadge;
+  }
+
+  function showFloatingBadge() {
+    if (isBadgeClosedNow()) return;
+    const b = ensureFloatingBadge();
+    b.style.display = "flex";
+  }
+
+  function hideFloatingBadge(/* persist */) {
+    if (floatingBadge) floatingBadge.style.display = "none";
   }
 
   // メッセージリスナー (popup から)
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!msg) return;
     if (msg.type === "GET_DOM_TEXT") {
-      // ⚠️ プライバシー対策：popup.js の sanitize と同じく input/textarea/password/contenteditable を除外
+      // プライバシー対策：popup.js の sanitize と同じく input/textarea/password/contenteditable を除外
       try {
         const clone = document.body ? document.body.cloneNode(true) : null;
         if (!clone) {
@@ -456,16 +484,23 @@
       return true;
     }
     if (msg.type === "ANALYZE_NOW") {
+      hideFloatingBadge(false);
       analyzeCurrentPage(true);
       sendResponse({ ok: true });
       return true;
     }
   });
 
-  // 初回起動
+  // 初回起動 — overlay は出さず、浮遊バッジだけ出す
+  function bootFloatingBadge() {
+    const url = location.href;
+    if (!url || url.startsWith("chrome://") || url.startsWith("about:")) return;
+    showFloatingBadge();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(checkUrlChange, 2000));
+    document.addEventListener("DOMContentLoaded", bootFloatingBadge);
   } else {
-    setTimeout(checkUrlChange, 2000);
+    bootFloatingBadge();
   }
 })();
