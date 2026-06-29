@@ -88,7 +88,7 @@ app = FastAPI(
         "情報のObservability=ニュース/SNSの信頼度+利害関係をリアルタイム可視化する"
         "マルチエージェント・ブラウザ拡張+LINE Bot。内部コード名: deepfact-validator"
     ),
-    version="1.1.5",
+    version="1.1.6",
 )
 
 # 🛡️ Rate Limiter (Economic DoS 対策・Critical C3)
@@ -308,7 +308,7 @@ async def _warmup() -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     """ヘルスチェック."""
-    return {"status": "ok", "version": "1.1.5"}
+    return {"status": "ok", "version": "1.1.6"}
 
 
 @app.get("/")
@@ -316,7 +316,7 @@ async def root() -> dict:
     """簡易ステータスページ."""
     return {
         "name": "DeepFact Validator",
-        "version": "1.1.5",
+        "version": "1.1.6",
         "entry_points": {
             "chrome_extension": "/api/analyze",
             "line_bot": "/webhook/line",
@@ -508,6 +508,41 @@ async def postmortem(req: PostmortemRequest) -> PostmortemResponse:
     """
     md = generate_postmortem(user_id=req.user_id, hours=req.hours)
     return PostmortemResponse(markdown=md, user_id=req.user_id, hours=req.hours)
+
+
+class FeedbackRequest(BaseModel):
+    """Chrome Extension HITL feedback ペイロード（動画 F5/F6 で見せる 3択 UI）."""
+    request_id: str = Field(default="", description="analyze 応答の request_id 紐付け")
+    verdict: str = Field(..., description="misjudge / warning_correct / unsure")
+    url_or_text: str = Field(default="", description="判定対象の URL またはテキスト断片")
+    score: float = Field(default=0.0, description="判定時の総合信頼度（0-1）")
+    label: str = Field(default="", description="判定時のラベル（高/中/低/警告）")
+
+
+class FeedbackResponse(BaseModel):
+    status: str
+    feedback_id: str
+
+
+@app.post("/api/feedback", response_model=FeedbackResponse)
+async def receive_feedback(req: FeedbackRequest) -> FeedbackResponse:
+    """Chrome Extension からの HITL feedback 受信（v1.1.6 追加）.
+
+    動画 F5/F6 で見せる 3択（誤判定 / 警告正しい / よくわからない）を Firestore に蓄積。
+    既存 save_feedback(user_id, verdict) を request_id ベースで活用する。
+    LINE Bot 経路の useful/not_useful とは別軸（信頼ソース辞書の CI/CD 改善用）.
+    """
+    # 既存 save_feedback() を user_id=request_id で活用（feedback_store と互換）
+    user_key = req.request_id or "chrome-anonymous"
+    save_feedback(user_key, req.verdict)
+    logger.info(
+        "feedback_received: verdict=%s score=%.3f label=%s request_id=%s",
+        req.verdict,
+        req.score or 0.0,
+        req.label,
+        req.request_id,
+    )
+    return FeedbackResponse(status="saved", feedback_id=user_key)
 
 
 @app.get("/api/articles/count")

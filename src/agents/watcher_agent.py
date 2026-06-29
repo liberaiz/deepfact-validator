@@ -356,7 +356,7 @@ async def _fetch_url(url: str, max_chars: int = 12000) -> str:
         async with httpx.AsyncClient(
             timeout=15.0,
             follow_redirects=True,
-            headers={"User-Agent": "DeepFact-Validator/1.1.5 (+https://liberaiz.co.jp)"},
+            headers={"User-Agent": "DeepFact-Validator/1.1.6 (+https://liberaiz.co.jp)"},
         ) as client:
             r = await client.get(url)
             r.raise_for_status()
@@ -372,7 +372,7 @@ async def _fetch_url_html(url: str) -> str:
         async with httpx.AsyncClient(
             timeout=15.0,
             follow_redirects=True,
-            headers={"User-Agent": "DeepFact-Validator/1.1.5 (+https://liberaiz.co.jp)"},
+            headers={"User-Agent": "DeepFact-Validator/1.1.6 (+https://liberaiz.co.jp)"},
         ) as client:
             r = await client.get(url)
             r.raise_for_status()

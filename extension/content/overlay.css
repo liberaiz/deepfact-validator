@@ -360,3 +360,175 @@
 #deepfact-overlay .df-status-dot:nth-child(2) { animation-delay: 0.0s; }
 #deepfact-overlay .df-status-dot:nth-child(3) { animation-delay: 0.2s; }
 #deepfact-overlay .df-status-dot:nth-child(4) { animation-delay: 0.4s; }
+
+/* === HITL フィードバック リンク（overlay 下部）=== */
+#deepfact-overlay .df-feedback-link-wrap {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(27, 42, 78, 0.18);
+  text-align: center;
+}
+#deepfact-overlay .df-feedback-link {
+  font-family: 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(27, 42, 78, 0.6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(27, 42, 78, 0.3);
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+#deepfact-overlay .df-feedback-link:hover {
+  color: #2D5A40;
+  text-decoration-color: #2D5A40;
+}
+
+/* === HITL フィードバック モーダル（動画 F5/F6 で見せる 3択 UI）=== */
+#deepfact-feedback-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: none;
+  font-family: 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+  color: #1B2A4E;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+#deepfact-feedback-modal * {
+  box-sizing: border-box;
+}
+
+#deepfact-feedback-modal .df-fb-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(27, 42, 78, 0.55);
+  animation: df-fb-fade 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#deepfact-feedback-modal .df-fb-dialog {
+  position: relative;
+  width: min(420px, calc(100% - 32px));
+  margin: 12vh auto 0;
+  background: #FFFFFF;
+  border: 1px solid #1B2A4E;
+  border-left: 4px solid #C9A55C;
+  border-radius: 2px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  animation: df-fb-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+}
+
+#deepfact-feedback-modal .df-fb-head {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  background: #1B2A4E;
+  color: #F8F6F1;
+  letter-spacing: 0.05em;
+}
+#deepfact-feedback-modal .df-fb-title {
+  flex: 1;
+  font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #C9A55C;
+}
+#deepfact-feedback-modal .df-fb-close {
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 18px;
+  line-height: 1;
+  color: #F8F6F1;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+#deepfact-feedback-modal .df-fb-close:hover { opacity: 1; }
+
+#deepfact-feedback-modal .df-fb-body {
+  padding: 18px 20px 20px;
+  background: #F8F6F1;
+}
+
+#deepfact-feedback-modal .df-fb-question {
+  font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+  color: #1B2A4E;
+  line-height: 1.6;
+}
+
+#deepfact-feedback-modal .df-fb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+#deepfact-feedback-modal .df-fb-opt {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding: 11px 14px;
+  font-family: 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-align: left;
+  color: #1B2A4E;
+  background: #FFFFFF;
+  border: 1px solid rgba(27, 42, 78, 0.25);
+  border-left: 3px solid rgba(201, 165, 92, 0.55);
+  border-radius: 1px;
+  transition: background 0.18s ease, border-color 0.18s ease,
+              color 0.18s ease, transform 0.12s ease;
+}
+#deepfact-feedback-modal .df-fb-opt:hover:not(:disabled) {
+  background: #EAF3EC;
+  border-color: rgba(45, 90, 64, 0.4);
+  border-left-color: #2D5A40;
+  transform: translateX(2px);
+}
+#deepfact-feedback-modal .df-fb-opt.df-fb-opt-selected {
+  background: #2D5A40;
+  color: #F8F6F1;
+  border-color: #2D5A40;
+  border-left-color: #C9A55C;
+}
+#deepfact-feedback-modal .df-fb-opt:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+#deepfact-feedback-modal .df-fb-note {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: rgba(27, 42, 78, 0.6);
+  letter-spacing: 0.03em;
+}
+
+#deepfact-feedback-modal .df-fb-done {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-family: 'Shippori Mincho B1', 'Yu Mincho', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: #2D5A40;
+  background: #EAF3EC;
+  border-left: 3px solid #2D5A40;
+  border-radius: 1px;
+  animation: df-fb-fade 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes df-fb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes df-fb-pop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

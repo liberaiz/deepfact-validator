@@ -20,6 +20,10 @@
   let overlay = null;
   let lastAnalyzeAt = 0;
   let debounceTimer = null;
+  // HITL フィードバック: analyze 結果に紐付ける context（動画 F5/F6 で見せている UX）
+  let lastRequestId = null;
+  let lastAnalyzeContext = null; // { url_or_text, score, label }
+  let feedbackModal = null;
 
   async function getConfig() {
     try {
@@ -101,6 +105,9 @@
       '  <ul class="df-primary"></ul>',
       '  <h4 class="df-h4 df-evidence-heading">判定エビデンス・ソース</h4>',
       '  <div class="df-evidence"></div>',
+      '  <div class="df-feedback-link-wrap">',
+      '    <a class="df-feedback-link" href="#">この判定は誤りですか？ フィードバックする →</a>',
+      "  </div>",
       "</div>",
     ].join("");
     document.documentElement.appendChild(overlay);
@@ -108,7 +115,93 @@
     overlay.querySelector(".df-close").addEventListener("click", () => {
       overlay.style.display = "none";
     });
+    const fbLink = overlay.querySelector(".df-feedback-link");
+    if (fbLink) {
+      fbLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openFeedbackModal();
+      });
+    }
     return overlay;
+  }
+
+  // === HITL フィードバック モーダル（動画 F5/F6 で見せている 3択 UI）===
+  function ensureFeedbackModal() {
+    if (feedbackModal && document.documentElement.contains(feedbackModal)) return feedbackModal;
+    feedbackModal = document.createElement("div");
+    feedbackModal.id = "deepfact-feedback-modal";
+    feedbackModal.innerHTML = [
+      '<div class="df-fb-backdrop"></div>',
+      '<div class="df-fb-dialog" role="dialog" aria-modal="true" aria-labelledby="df-fb-title">',
+      '  <div class="df-fb-head">',
+      '    <span class="df-fb-title" id="df-fb-title">この判定について</span>',
+      '    <span class="df-fb-close" title="閉じる">×</span>',
+      "  </div>",
+      '  <div class="df-fb-body">',
+      '    <p class="df-fb-question">この判定について、どう感じましたか？</p>',
+      '    <div class="df-fb-options">',
+      '      <button class="df-fb-opt" data-verdict="misjudge">✓ 誤判定だと思う</button>',
+      '      <button class="df-fb-opt" data-verdict="warning_correct">警告は正しい</button>',
+      '      <button class="df-fb-opt" data-verdict="unsure">よくわからない</button>',
+      "    </div>",
+      '    <p class="df-fb-note">フィードバックは匿名で記録されます。信頼ソース辞書の継続的改善（CI/CD）に使用されます。</p>',
+      '    <p class="df-fb-done" style="display:none;">フィードバックを送信しました。ありがとうございます。</p>',
+      "  </div>",
+      "</div>",
+    ].join("");
+    document.documentElement.appendChild(feedbackModal);
+
+    feedbackModal.querySelector(".df-fb-backdrop").addEventListener("click", closeFeedbackModal);
+    feedbackModal.querySelector(".df-fb-close").addEventListener("click", closeFeedbackModal);
+    feedbackModal.querySelectorAll(".df-fb-opt").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const verdict = e.currentTarget.getAttribute("data-verdict");
+        // 選択 UI 反映
+        feedbackModal.querySelectorAll(".df-fb-opt").forEach((b) => b.classList.remove("df-fb-opt-selected"));
+        e.currentTarget.classList.add("df-fb-opt-selected");
+        await sendFeedback(verdict);
+      });
+    });
+    return feedbackModal;
+  }
+
+  function openFeedbackModal() {
+    const m = ensureFeedbackModal();
+    m.querySelector(".df-fb-done").style.display = "none";
+    m.querySelectorAll(".df-fb-opt").forEach((b) => {
+      b.classList.remove("df-fb-opt-selected");
+      b.disabled = false;
+    });
+    m.style.display = "block";
+  }
+
+  function closeFeedbackModal() {
+    if (feedbackModal) feedbackModal.style.display = "none";
+  }
+
+  async function sendFeedback(verdict) {
+    const { endpoint } = await getConfig();
+    const ctx = lastAnalyzeContext || {};
+    const payload = {
+      request_id: lastRequestId || "",
+      verdict: verdict,
+      url_or_text: ctx.url_or_text || location.href,
+      score: typeof ctx.score === "number" ? ctx.score : null,
+      label: ctx.label || "",
+    };
+    try {
+      await fetch(endpoint + "/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      // ネットワーク失敗時も UX は完了表示（匿名フィードバック・retry なし）
+    }
+    if (feedbackModal) {
+      feedbackModal.querySelectorAll(".df-fb-opt").forEach((b) => (b.disabled = true));
+      feedbackModal.querySelector(".df-fb-done").style.display = "block";
+    }
   }
 
   const DF_METER_CIRCUMFERENCE = 2 * Math.PI * 42; // 263.89
@@ -146,7 +239,7 @@
     });
   }
 
-  function renderResult(data) {
+  function renderResult(data, contextInput) {
     const o = ensureOverlay();
     o.style.display = "block";
 
@@ -154,6 +247,14 @@
     const pct = Math.round((cred.overall_score || 0) * 100);
     const label = cred.overall_label || "?";
     const bandClass = labelToBand(label);
+
+    // HITL フィードバック紐付け: request_id + 判定 context を overlay に保持
+    lastRequestId = data.request_id || data.requestId || null;
+    lastAnalyzeContext = {
+      url_or_text: contextInput || location.href,
+      score: (cred.overall_score != null) ? cred.overall_score : null,
+      label: label,
+    };
 
     const meterLabel = o.querySelector(".df-meter-label");
     if (meterLabel) {
