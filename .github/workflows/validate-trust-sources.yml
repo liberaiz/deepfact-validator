@@ -6,14 +6,12 @@ name: validate-trust-sources
 on:
   pull_request:
     paths:
-      - "marketing/hackathon-2026/deepfact-validator/config/**"
-      - "marketing/hackathon-2026/deepfact-validator/scripts/validate-trust-sources.py"
-      - "marketing/hackathon-2026/deepfact-validator/.github/workflows/validate-trust-sources.yml"
+      - "config/**"
+      - "scripts/validate-trust-sources.py"
+      - ".github/workflows/validate-trust-sources.yml"
   push:
     branches:
       - main
-    paths:
-      - "marketing/hackathon-2026/deepfact-validator/**"
   workflow_dispatch: {}
 
 # Cancel duplicate runs on the same PR / branch
@@ -22,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROJECT_DIR: marketing/hackathon-2026/deepfact-validator
+  PROJECT_DIR: .
 
 jobs:
   validate:
