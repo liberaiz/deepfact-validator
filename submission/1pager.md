@@ -4,6 +4,10 @@
 
 **DeepFact Validator** ─ 情報の Observability を社会に実装するマルチエージェント
 
+- 🚀 Live: https://deepfact-validator-kjciocymea-an.a.run.app
+- 📦 GitHub: https://github.com/liberaiz/deepfact-validator
+- 🔄 CI/CD: [![validate-trust-sources](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)
+
 ## 1行概要
 
 **ユーザーがネットを見ている瞬間に、AIエージェントが情報の信頼度と利害関係をリアルタイム可視化する** ＝医師である創業者の「真偽判断は一次情報まで追う」習慣を、マルチエージェント AI で社会全体に拡張する。
@@ -35,7 +39,7 @@
 出力 (信頼度スコア + 構造観察 + 免責文)
 ```
 
-全エージェント：**Vertex AI Gemini 2.5-flash** × **temperature=0.0 + seed=42 + top_k=1**（ベストエフォート）+ **Firestore キャッシュ二層で同一入力一致を完全保証**。
+全エージェント：**Vertex AI Gemini 2.5-flash** × **temperature=0.0 + seed=42 + top_k=1**（ベストエフォート）+ **Firestore キャッシュ二層により同一入力の出力を再現保証**（キャッシュ HIT 時は完全一致・コンテストデモ事故ゼロ）。
 
 ## 実機検証結果（v0.3・2026-06-20 09:00 確定）
 

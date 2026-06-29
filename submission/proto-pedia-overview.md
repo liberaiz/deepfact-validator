@@ -14,6 +14,10 @@
 
 ユーザーがネットを見ている瞬間に、AI エージェントが情報の信頼度と利害関係をリアルタイム可視化します。医師である創業者の「真偽判断は一次情報まで遡る」習慣を、マルチエージェント AI で社会全体に拡張するプロダクトです。
 
+- 🚀 動作確認: https://deepfact-validator-kjciocymea-an.a.run.app
+- 📦 ソースコード: https://github.com/liberaiz/deepfact-validator
+- 🔄 CI/CD パイプライン稼働中: https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml
+
 ### なぜ作るか
 
 誤情報・誇張広告・陰謀論型フェイクが医療領域に流入する現状で、ユーザーが疑問を持つ前に AI Agent が能動介入し、信頼度スコア・構造観察・公的機関ソース URL を提供します。
@@ -40,7 +44,7 @@
 出力（信頼度スコア + 構造観察 + 公的機関ソース URL）
 ```
 
-全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1 で決定化。同一入力 × 3 回で完全一致を Firestore キャッシュで保証（コンテストデモ事故ゼロ）。
+全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1（ベストエフォート）+ Firestore キャッシュ二層により同一入力の出力を再現保証（キャッシュ HIT 時は完全一致・コンテストデモ事故ゼロ）。
 
 ### 実機検証結果（v0.3）
 
@@ -84,7 +88,8 @@
 - **LINE Bot 永続 event loop**: `run_coroutine_threadsafe` で接続プール持続化
 - **Vector Search**: Vertex AI text-embedding-005 + Firestore + cosine similarity（過去類似主張照合・v0.3 実装済）
 - **データ**: Firestore（信頼ソース辞書・警告履歴・response cache・記事 embedding）
-- **Observability**: Cloud Logging + Monitoring + Postmortem 自動生成
+- **Observability**: Cloud Logging 構造化ログ × 8 ログベースメトリクス（unknown_rate / cache_hit_rate / p95_latency / error_rate ほか）× 4 アラートポリシー（Cloud Monitoring）
+- **CI/CD パイプライン**: 信頼ソース辞書 YAML → GitHub Actions validate（yamllint + schema/range/enum/duplicate + smoke load test）→ Cloud Build → Cloud Run auto-deploy（badge: [![validate](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)）
 - **フロント**: LINE Bot（実装済・稼働中）/ Chrome Extension（Manifest V3・Phase 2 実装済）/ Web UI Workbench
 
 ### 法的リスク対策
