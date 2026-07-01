@@ -36,7 +36,7 @@
    ↓
 [Watcher Agent]      記事抽出・主張抽出・感情強度・出典 URL
    ↓
-[Investigator Agent] 125 ドメイン信頼辞書 × Vertex AI Gemini で
+[Investigator Agent] 100+ ドメイン信頼辞書 × Vertex AI Gemini で
                      論調バイアス／事実整合性／対立見解
    ↓
 [Validator Agent]    数値統合 + 自然言語の構造観察レポート生成
@@ -44,20 +44,19 @@
 出力（信頼度スコア + 構造観察 + 公的機関ソース URL）
 ```
 
-全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1（ベストエフォート）+ Firestore キャッシュ二層により同一入力の出力を再現保証（キャッシュ HIT 時は完全一致・コンテストデモ事故ゼロ）。
+全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1 で出力を安定化（Vertex AI の決定性はベストエフォート）。加えて Firestore 入力ハッシュキャッシュにより、キャッシュ HIT 時は同一入力に対し完全一致の結果を返す。
 
-### 実機検証結果（v0.3）
+### 実機検証結果（2026-07-01 本番環境 v1.1.9 で実測）
 
 | 入力パターン | 信頼度 | ラベル |
 |---|---:|---|
-| フェイク主張（証拠なき断定） | 20% | 警告 |
-| 厚労省一次情報 URL | 98% | 高 |
-| 中立報道風（賛否両論） | 59% | 中 |
-| 誇張広告（3 日でガン消失） | 20% | 警告 |
-| ワクチンフェイク（陰謀論型） | 25% | 警告 |
-| 学術的論調（系統的レビュー言及） | 59% | 中 |
+| がん3日完治・製薬会社の陰謀（フェイク医療） | 20% | 警告 |
+| 5G＝コロナ拡散・人口削減計画（陰謀論） | 20% | 警告 |
+| 水で難病治癒（疑似科学） | 25% | 警告 |
+| 厚労省の健診実施要領を参照（中立・公的情報） | 68% | 中 |
+| 厚生労働省 一次情報 URL（mhlw.go.jp） | 92% | 高 |
 
-→ **98% vs 20% = 78 ポイント振れ幅**（入力依存性完全確認）
+→ **92% vs 20% ＝ 72 ポイントの振れ幅**（入力内容で信頼度が大きく変動＝固定値でない実分析であることを確認）
 
 ### 3 つの利用エントリ
 
@@ -81,9 +80,9 @@
 - **API**: FastAPI（Python 3.12）+ CORS Middleware
 - **第三者ソース照合**: Google Fact Check Tools API（IFCN 加盟団体・ja+en 並列）+ Wikipedia REST API（ja+en 並列）+ 15s timeout + httpx 5s + retry 1 回
 - **公的機関ソース上位常時挿入**: 厚労省 / PMDA / WHO / CDC / 総務省 + JFC / Snopes / PolitiFact / FullFact / Reuters Fact Check / AFP Fact Check
-- **信頼ドメイン辞書**: 125 ドメイン（医療/政府/学術/国際機関/ファクトチェック団体）
-- **煽動パターン辞書**: 5 カテゴリ × 143 キーワード（陰謀論用語網羅）
-- **Wikipedia noise filter**: アニメ・ゲーム・芸能等 47 キーワードで TF-IDF 誤ヒット除外
+- **信頼ドメイン辞書**: 100+ ドメイン（医療/政府/学術/国際機関/ファクトチェック団体）
+- **煽動パターン辞書**: 5 カテゴリの陰謀論用語辞書（マイクロチップ / 5G / 思想統制 等）
+- **Wikipedia noise filter**: アニメ・ゲーム・芸能等 40+ キーワードで TF-IDF 誤ヒット除外
 - **同一入力決定化**: Firestore 入力ハッシュキャッシュ
 - **LINE Bot 永続 event loop**: `run_coroutine_threadsafe` で接続プール持続化
 - **Vector Search**: Vertex AI text-embedding-005 + Firestore + cosine similarity（過去類似主張照合・v0.3 実装済）
@@ -102,8 +101,8 @@
 
 ### チーム
 
-**株式会社 Liberaiz**（代表取締役 Dr. 加藤）
-医師・医学博士・産業医・元院長 × Anthropic Certified 三冠（Claude 101 / AI Fluency / Cowork）
+**株式会社 Liberaiz**（代表取締役 加藤貴志）
+医師・医学博士・独立家 × Anthropic Certified 三冠（Claude 101 / AI Fluency / Cowork）
 「医師の習慣を AI Agent で社会全体に拡張する」をコアコンセプトに 1 人法人で運営
 
 ---
