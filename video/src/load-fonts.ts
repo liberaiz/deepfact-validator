@@ -1,11 +1,11 @@
-import { loadFont as loadShipporiMinchoB1 } from "@remotion/google-fonts/ShipporiMinchoB1";
 import { loadFont as loadCormorantGaramond } from "@remotion/google-fonts/CormorantGaramond";
 import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
 
-const shippori = loadShipporiMinchoB1("normal", {
-  weights: ["500", "700", "800"],
-  subsets: ["japanese"],
-});
+// 日本語フォントはネットワーク取得を廃止し、OS 搭載のシステムフォントを使う
+// （ShipporiMinchoB1 の 360+ リクエストで ERR_INSUFFICIENT_RESOURCES が発生するため）
+// Windows: Yu Mincho / YuMincho  ← Remotion 実行環境に搭載済み
+// macOS: Hiragino Mincho ProN
+// fallback: 游明朝 → serif
 
 const cormorant = loadCormorantGaramond("normal", {
   weights: ["500", "600", "700"],
@@ -18,14 +18,13 @@ const inter = loadInter("normal", {
 });
 
 export const FONT_FAMILIES = {
-  serifJp: `${shippori.fontFamily}, 'Yu Mincho', 'YuMincho', serif`,
+  serifJp: `'Yu Mincho', 'YuMincho', 'Hiragino Mincho ProN', 'Noto Serif JP', serif`,
   serifEn: `${cormorant.fontFamily}, 'Times New Roman', serif`,
   sans: `${inter.fontFamily}, 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif`,
-  mono: `'JetBrains Mono', 'SFMono-Regular', monospace`,
+  mono: `'JetBrains Mono', 'Courier New', 'SFMono-Regular', monospace`,
 };
 
 export const FONT_WAIT_FOR_READY = Promise.all([
-  shippori.waitUntilDone(),
   cormorant.waitUntilDone(),
   inter.waitUntilDone(),
 ]);

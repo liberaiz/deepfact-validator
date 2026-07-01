@@ -356,7 +356,7 @@ async def _fetch_url(url: str, max_chars: int = 12000) -> str:
         async with httpx.AsyncClient(
             timeout=15.0,
             follow_redirects=True,
-            headers={"User-Agent": "DeepFact-Validator/1.1.7 (+https://liberaiz.co.jp)"},
+            headers={"User-Agent": "DeepFact-Validator/1.1.8 (+https://liberaiz.co.jp)"},
         ) as client:
             r = await client.get(url)
             r.raise_for_status()
@@ -372,7 +372,7 @@ async def _fetch_url_html(url: str) -> str:
         async with httpx.AsyncClient(
             timeout=15.0,
             follow_redirects=True,
-            headers={"User-Agent": "DeepFact-Validator/1.1.7 (+https://liberaiz.co.jp)"},
+            headers={"User-Agent": "DeepFact-Validator/1.1.8 (+https://liberaiz.co.jp)"},
         ) as client:
             r = await client.get(url)
             r.raise_for_status()
@@ -382,16 +382,24 @@ async def _fetch_url_html(url: str) -> str:
         return ""
 
 
-_GEMINI_CLIENT: genai.Client | None = None
+# 🆕 v1.1.9: google-genai の async transport は生成時のイベントループに束縛される。
+# LINE の永続 bg-loop（別スレッド）と HTTP メインループで単一クライアントを共有すると
+# クロスループ即例外 → gemini_unavailable になるため、ループ単位でキャッシュする。
+_GEMINI_CLIENTS: dict = {}
 
 
 def _get_gemini_client() -> genai.Client | None:
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is not None:
-        return _GEMINI_CLIENT
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    cached = _GEMINI_CLIENTS.get(loop)
+    if cached is not None:
+        return cached
     try:
         if settings.gcp.use_vertex_ai:
-            _GEMINI_CLIENT = genai.Client(
+            client = genai.Client(
                 vertexai=True,
                 project=settings.gcp.vertex_project,
                 location=settings.gcp.vertex_location,
@@ -400,16 +408,19 @@ def _get_gemini_client() -> genai.Client | None:
                 "Gemini client initialized (Vertex AI mode) project=%s location=%s",
                 settings.gcp.vertex_project, settings.gcp.vertex_location,
             )
-            return _GEMINI_CLIENT
+            _GEMINI_CLIENTS[loop] = client
+            return client
         if not settings.gcp.gemini_api_key:
             logger.warning("GEMINI_API_KEY not set and USE_VERTEX_AI=false — Watcher fallback")
             return None
         key = settings.gcp.gemini_api_key.strip()
-        _GEMINI_CLIENT = genai.Client(api_key=key)
+        client = genai.Client(api_key=key)
         logger.info("Gemini client initialized (API key mode)")
-        return _GEMINI_CLIENT
+        _GEMINI_CLIENTS[loop] = client
+        return client
     except Exception:
         logger.exception("Gemini client init failed")
+        return None
         return None
 
 

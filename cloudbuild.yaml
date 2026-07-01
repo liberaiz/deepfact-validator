@@ -30,6 +30,7 @@ steps:
       - '--allow-unauthenticated'
       - '--min-instances=1'
       - '--max-instances=10'
+      - '--no-cpu-throttling'
       - '--memory=1Gi'
       - '--cpu=1'
       - '--timeout=300'

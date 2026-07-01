@@ -303,28 +303,38 @@ def _classify_source(domain: str) -> tuple[str, float, str]:
     return ("未登録", 0.50, "unknown")
 
 
-_GEMINI_CLIENT: genai.Client | None = None
+# 🆕 v1.1.9: async transport はイベントループに束縛される。LINE bg-loop と HTTP メインループで
+# 単一クライアントを共有するとクロスループ即例外 → gemini_unavailable。ループ単位でキャッシュする。
+_GEMINI_CLIENTS: dict = {}
 
 
 def _get_gemini_client() -> genai.Client | None:
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is not None:
-        return _GEMINI_CLIENT
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    cached = _GEMINI_CLIENTS.get(loop)
+    if cached is not None:
+        return cached
     try:
         if settings.gcp.use_vertex_ai:
-            _GEMINI_CLIENT = genai.Client(
+            client = genai.Client(
                 vertexai=True,
                 project=settings.gcp.vertex_project,
                 location=settings.gcp.vertex_location,
             )
-            return _GEMINI_CLIENT
+            _GEMINI_CLIENTS[loop] = client
+            return client
         if not settings.gcp.gemini_api_key:
             return None
         key = settings.gcp.gemini_api_key.strip()
-        _GEMINI_CLIENT = genai.Client(api_key=key)
-        return _GEMINI_CLIENT
+        client = genai.Client(api_key=key)
+        _GEMINI_CLIENTS[loop] = client
+        return client
     except Exception:
         logger.exception("Gemini client init failed")
+        return None
         return None
 
 
@@ -383,7 +393,7 @@ INVESTIGATOR_PROMPT = """【最重要・絶対遵守】
 
 【重要】
 - JSONのみ返す。説明文を含めない。
-- 「人を攻撃しない・構造を可視化する」原則を守る。個人名/団体名を断定攻撃しない。
+- 「発信者個人を断定せず・構造を可視化する」原則を守る。個人名/団体名を断定的に指摘しない。
 - 政治的・宗教的に微妙なテーマは特に「両論」として contrarian_views に複数の立場を提示。
 """
 

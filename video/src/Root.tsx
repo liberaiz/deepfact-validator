@@ -2,7 +2,7 @@ import { Composition } from "remotion";
 import { MainComposition } from "./MainComposition";
 
 export const FPS = 30;
-export const DURATION_SECONDS = 60;
+export const DURATION_SECONDS = 99;
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
 

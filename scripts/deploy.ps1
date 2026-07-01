@@ -3,7 +3,7 @@
 # NOTE: ErrorActionPreference must be Continue for PowerShell 5 + gcloud
 $ErrorActionPreference = "Continue"
 
-$ProjectId   = if ($env:PROJECT_ID)   { $env:PROJECT_ID }   else { "deepfact-validator" }
+$ProjectId   = if ($env:PROJECT_ID)   { $env:PROJECT_ID }   else { "pharma-guardian" }
 $Region      = if ($env:REGION)       { $env:REGION }       else { "asia-northeast1" }
 $ServiceName = if ($env:SERVICE_NAME) { $env:SERVICE_NAME } else { "deepfact-validator" }
 $RepoName    = if ($env:REPO_NAME)    { $env:REPO_NAME }    else { "deepfact-validator" }

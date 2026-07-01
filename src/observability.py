@@ -33,7 +33,7 @@ from typing import Any, Iterator, Optional
 # ============================================================
 
 SERVICE_NAME = "deepfact-validator"
-SERVICE_VERSION = "1.1.3"
+SERVICE_VERSION = "1.1.9"
 
 # イベント名（Cloud Logging で `jsonPayload.event` フィルタに使う）
 EVENT_ANALYZE_REQUEST = "analyze_request"

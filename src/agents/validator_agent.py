@@ -53,28 +53,38 @@ def _label_from_score(score: float) -> str:
         return "警告"
 
 
-_GEMINI_CLIENT: genai.Client | None = None
+# 🆕 v1.1.9: async transport はイベントループに束縛される。LINE bg-loop と HTTP メインループで
+# 単一クライアントを共有するとクロスループ即例外 → gemini_unavailable。ループ単位でキャッシュする。
+_GEMINI_CLIENTS: dict = {}
 
 
 def _get_gemini_client() -> genai.Client | None:
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is not None:
-        return _GEMINI_CLIENT
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    cached = _GEMINI_CLIENTS.get(loop)
+    if cached is not None:
+        return cached
     try:
         if settings.gcp.use_vertex_ai:
-            _GEMINI_CLIENT = genai.Client(
+            client = genai.Client(
                 vertexai=True,
                 project=settings.gcp.vertex_project,
                 location=settings.gcp.vertex_location,
             )
-            return _GEMINI_CLIENT
+            _GEMINI_CLIENTS[loop] = client
+            return client
         if not settings.gcp.gemini_api_key:
             return None
         key = settings.gcp.gemini_api_key.strip()
-        _GEMINI_CLIENT = genai.Client(api_key=key)
-        return _GEMINI_CLIENT
+        client = genai.Client(api_key=key)
+        _GEMINI_CLIENTS[loop] = client
+        return client
     except Exception:
         logger.exception("Gemini client init failed")
+        return None
         return None
 
 
@@ -111,7 +121,7 @@ VALIDATOR_PROMPT = """【最重要・絶対遵守】
 以下のJSON形式で返してください。
 
 {{
-  "summary": "本記事の構造的特徴を3-5文で要約。客観的に。人/団体を断定攻撃しない。",
+  "summary": "本記事の構造的特徴を3-5文で要約。客観的に。発信者（個人・団体）を断定的に指摘しない。",
   "structural_observations": ["構造観察を5-8個。「○○という構造」「○○の傾向」形式。具体的な構造名で。"],
   "concise_verdict": "1文で「この情報構造は信頼度○○、理由は○○の構造」と要約。"
 }}

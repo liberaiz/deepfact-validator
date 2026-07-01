@@ -77,7 +77,7 @@
 ### 技術スタック
 
 - **LLM**: Vertex AI Gemini 2.5-flash（GCP billing 経由・Free Tier 制約解消・各 call 30s timeout）
-- **実行基盤**: Cloud Run（min-instances=1 + warmup）・asia-northeast1
+- **実行基盤**: Cloud Run（min-instances=1 + CPU常時割当 [no-cpu-throttling]・非同期バックグラウンド解析の遅延を解消）・asia-northeast1
 - **API**: FastAPI（Python 3.12）+ CORS Middleware
 - **第三者ソース照合**: Google Fact Check Tools API（IFCN 加盟団体・ja+en 並列）+ Wikipedia REST API（ja+en 並列）+ 15s timeout + httpx 5s + retry 1 回
 - **公的機関ソース上位常時挿入**: 厚労省 / PMDA / WHO / CDC / 総務省 + JFC / Snopes / PolitiFact / FullFact / Reuters Fact Check / AFP Fact Check
@@ -90,11 +90,11 @@
 - **データ**: Firestore（信頼ソース辞書・警告履歴・response cache・記事 embedding）
 - **Observability**: Cloud Logging 構造化ログ × 8 ログベースメトリクス（unknown_rate / cache_hit_rate / p95_latency / error_rate ほか）× 4 アラートポリシー（Cloud Monitoring）
 - **CI/CD パイプライン**: 信頼ソース辞書 YAML → GitHub Actions validate（yamllint + schema/range/enum/duplicate + smoke load test）→ Cloud Build → Cloud Run auto-deploy（badge: [![validate](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)）
-- **フロント**: LINE Bot（実装済・稼働中）/ Chrome Extension（Manifest V3・v1.1.7 浮遊バッジ手動トリガー方式・HITL UI 内蔵）/ Web UI Workbench（v1.1.7 で実機実装・`/workbench/` 同オリジン serve・HITL UI 内蔵）
+- **フロント**: LINE Bot（実装済・稼働中）/ Chrome Extension（Manifest V3・v1.1.8 浮遊バッジ＋ツールバーアイコン起動・HITL UI 内蔵）/ Web UI Workbench（実機実装・`/workbench/` 同オリジン serve・HITL UI 内蔵）
 
 ### 法的リスク対策
 
-「人を攻撃しない・構造を可視化する」原則を全レポートに常設。個人・組織への断定攻撃を禁則とし、「○○という構造」「○○の傾向」形式のみで提示。政治的・宗教的に微妙な主張は「複数の立場が成り立つ構造」を contrarian_views で提示。
+「発信者個人を断定せず・構造を可視化する」原則を全レポートに常設。発信者個人・組織を断定的に指摘することを禁則とし、「○○という構造」「○○の傾向」形式のみで提示。政治的・宗教的に微妙な主張は「複数の立場が成り立つ構造」を contrarian_views で提示。
 
 ### デプロイ済 URL
 
@@ -137,7 +137,7 @@
 
 1. https://studio.youtube.com にアクセス（社長 Google アカウント）
 2. 右上「作成」→「動画をアップロード」
-3. ファイル: `marketing/hackathon-2026/deepfact-validator/video/out/deepfact-demo-v0.2.mp4`（4MB 程度）
+3. ファイル: `marketing/hackathon-2026/deepfact-validator/video/out/deepfact-demo-v0.7.mp4`（1920×1080・99秒・約10MB）
 4. **タイトル**: `DeepFact Validator — DevOps × AI Agent Hackathon 2026 demo`
 5. **説明**: 「マルチエージェント AI で情報の Observability を実装するプロダクトです。」
 6. **公開設定**: **限定公開**（URL を知っている人だけ視聴可・コンテスト用に適切）

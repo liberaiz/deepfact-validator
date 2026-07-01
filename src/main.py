@@ -90,7 +90,7 @@ app = FastAPI(
         "情報のObservability=ニュース/SNSの信頼度+利害関係をリアルタイム可視化する"
         "マルチエージェント・ブラウザ拡張+LINE Bot。内部コード名: deepfact-validator"
     ),
-    version="1.1.7",
+    version="1.1.9",
 )
 
 # 🛡️ Rate Limiter (Economic DoS 対策・Critical C3)
@@ -310,7 +310,7 @@ async def _warmup() -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     """ヘルスチェック."""
-    return {"status": "ok", "version": "1.1.7"}
+    return {"status": "ok", "version": "1.1.9"}
 
 
 @app.get("/")
@@ -318,7 +318,7 @@ async def root() -> dict:
     """簡易ステータスページ."""
     return {
         "name": "DeepFact Validator",
-        "version": "1.1.7",
+        "version": "1.1.9",
         "entry_points": {
             "chrome_extension": "/api/analyze",
             "web_ui_workbench": "/workbench",
