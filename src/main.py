@@ -19,7 +19,7 @@ import os
 import httpx
 from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
@@ -310,23 +310,52 @@ async def _warmup() -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     """ヘルスチェック."""
-    return {"status": "ok", "version": "1.1.9"}
+    return {"status": "ok", "version": "1.1.10"}
 
 
-@app.get("/")
-async def root() -> dict:
-    """簡易ステータスページ."""
+_LANDING_CANDIDATES = [
+    "/app/web-ui/landing.html",
+    os.path.join(os.path.dirname(__file__), "..", "web-ui", "landing.html"),
+    "web-ui/landing.html",
+]
+
+
+def _find_landing() -> str | None:
+    for _c in _LANDING_CANDIDATES:
+        _a = os.path.abspath(_c)
+        if os.path.isfile(_a):
+            return _a
+    return None
+
+
+def _status_payload() -> dict:
     return {
         "name": "DeepFact Validator",
-        "version": "1.1.9",
+        "version": "1.1.10",
         "entry_points": {
-            "chrome_extension": "/api/analyze",
+            "landing": "/",
             "web_ui_workbench": "/workbench",
+            "chrome_extension": "/api/analyze",
             "line_bot": "/webhook/line",
             "health": "/health",
         },
         "principle": settings.app.primary_source_principle_footer,
     }
+
+
+@app.get("/")
+async def root():
+    """ランディングページ（初訪問者の第一接触）。landing.html を配信し、無ければ JSON にフォールバック."""
+    _landing = _find_landing()
+    if _landing:
+        return FileResponse(_landing, media_type="text/html")
+    return JSONResponse(_status_payload())
+
+
+@app.get("/api/status")
+async def api_status() -> dict:
+    """プログラム向けステータス（旧 / の JSON）."""
+    return _status_payload()
 
 
 @app.post("/api/analyze", response_model=AnalyzeResponse)

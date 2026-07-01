@@ -1,0 +1,566 @@
+<!--
+  DeepFact Validator — Landing Page (v1.0)
+  Hallmark macrostructure: Editorial Gate (単一CTA導線) · tone: editorial-workbench (Workbench と統一)
+  anchor hue: navy(#1B2A4E) + warm-gold(#C9A55C) + paper(#F8F6F1)
+  Purpose: 初訪問者(審査員/一般)が1クリックで /workbench に迷わず到達する第一接触ページ
+  Self-contained single file. Fonts loaded via Google Fonts (workbench.css と同一ファミリー)。
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepFact Validator — 情報のObservability</title>
+<meta name="description" content="情報の信頼度と利害関係を、AIエージェントがリアルタイムに可視化する。人ではなく構造を見る。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho+B1:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* === Liberaiz Brand Tokens (workbench.css と同一) === */
+  --c-paper:        #F8F6F1;
+  --c-paper-warm:   #EFEBE0;
+  --c-paper-deep:   #E2DCC8;
+  --c-ink:          #1B2A4E;
+  --c-ink-deep:     #131F3B;
+  --c-ink-soft:     #2A3B66;
+  --c-ink-mute:     rgba(27, 42, 78, 0.55);
+  --c-ink-faint:    rgba(27, 42, 78, 0.32);
+  --c-gold:         #C9A55C;
+  --c-gold-deep:    #A38440;
+  --c-gold-soft:    rgba(201, 165, 92, 0.25);
+  --c-safe:         #3D8A55;
+  --c-warn:         #C8453B;
+  --c-rule:         rgba(27, 42, 78, 0.12);
+  --c-rule-soft:    rgba(27, 42, 78, 0.06);
+
+  --f-serif-en:     'Cormorant Garamond', 'Times New Roman', serif;
+  --f-serif-jp:     'Shippori Mincho B1', 'Yu Mincho', 'YuMincho', serif;
+  --f-sans:         'Inter', 'Yu Gothic', 'YuGothic', 'Hiragino Sans', sans-serif;
+  --f-mono:         'JetBrains Mono', 'SFMono-Regular', monospace;
+
+  --s-2:  4px;  --s-3:  8px;  --s-4:  12px; --s-5:  16px;
+  --s-6:  20px; --s-7:  24px; --s-8:  32px; --s-9:  40px;
+  --s-10: 56px; --s-11: 72px; --s-12: 96px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-short: 180ms;
+  --dur-med: 320ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--c-paper);
+  color: var(--c-ink);
+  font-family: var(--f-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; }
+
+/* =====================================================
+   MASTHEAD (Workbench と共通言語)
+===================================================== */
+.masthead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-7);
+  padding: var(--s-6) var(--s-9);
+  border-bottom: 1px solid var(--c-rule);
+  background: rgba(248, 246, 241, 0.92);
+  backdrop-filter: blur(8px);
+}
+.brand { display: flex; align-items: baseline; gap: var(--s-4); }
+.brand-mark {
+  font-family: var(--f-serif-en);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--c-ink);
+  line-height: 1;
+}
+.brand-jp {
+  font-family: var(--f-serif-jp);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--c-ink-mute);
+}
+.masthead-tagline {
+  font-family: var(--f-serif-jp);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--c-ink-mute);
+  text-align: center;
+}
+.masthead-tagline::before,
+.masthead-tagline::after {
+  content: "—";
+  margin: 0 var(--s-4);
+  color: var(--c-gold-deep);
+}
+.masthead-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--c-ink-mute);
+  letter-spacing: 0.06em;
+}
+.dot-live {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--c-safe);
+  margin-right: var(--s-3);
+}
+
+/* =====================================================
+   HERO
+===================================================== */
+.hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--s-12) var(--s-9) var(--s-10);
+  text-align: center;
+}
+.hero-eyebrow {
+  font-family: var(--f-serif-jp);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--c-gold-deep);
+  margin-bottom: var(--s-6);
+}
+.hero-title {
+  font-family: var(--f-serif-en);
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: var(--c-ink);
+  margin-bottom: var(--s-6);
+}
+.hero-title-jp {
+  display: block;
+  font-family: var(--f-serif-jp);
+  font-size: clamp(14px, 2vw, 17px);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: var(--c-ink-mute);
+  margin-top: var(--s-4);
+}
+.hero-lead {
+  font-family: var(--f-serif-jp);
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.95;
+  color: var(--c-ink);
+  max-width: 34em;
+  margin: 0 auto var(--s-4);
+}
+.hero-sub {
+  font-family: var(--f-serif-jp);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--c-ink-mute);
+  margin-bottom: var(--s-9);
+}
+.hero-sub::before, .hero-sub::after {
+  content: "—";
+  margin: 0 var(--s-3);
+  color: var(--c-gold);
+}
+
+/* --- Primary CTA (唯一の主導線) --- */
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-4);
+  font-family: var(--f-serif-jp);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  padding: 18px 44px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  border: none;
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out),
+              letter-spacing var(--dur-med) var(--ease-out);
+}
+.cta-primary:hover {
+  background: var(--c-ink-deep);
+  letter-spacing: 0.22em;
+}
+.cta-primary .arrow {
+  font-family: var(--f-serif-en);
+  color: var(--c-gold);
+  font-size: 18px;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+.cta-primary:hover .arrow { transform: translateX(4px); }
+.cta-note {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-mute);
+  margin-top: var(--s-5);
+}
+
+/* =====================================================
+   ENTRY POINTS (3列・カード量産感を避けた罫線ベース設計)
+===================================================== */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--s-11) var(--s-9);
+}
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  margin-bottom: var(--s-9);
+}
+.section-label-text {
+  font-family: var(--f-serif-jp);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--c-ink-mute);
+  white-space: nowrap;
+}
+.section-label-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--c-rule);
+}
+
+.entries {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--c-rule);
+  border-left: 1px solid var(--c-rule);
+}
+.entry {
+  padding: var(--s-8) var(--s-7);
+  border-right: 1px solid var(--c-rule);
+  border-bottom: 1px solid var(--c-rule);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  position: relative;
+  transition: background var(--dur-short) var(--ease-out);
+}
+.entry.is-primary { background: var(--c-paper-warm); }
+.entry-index {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--c-gold-deep);
+}
+.entry-name {
+  font-family: var(--f-serif-jp);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--c-ink);
+}
+.entry-desc {
+  font-family: var(--f-serif-jp);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--c-ink-mute);
+  flex: 1;
+}
+.entry-tag {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--c-safe);
+}
+.entry-tag.tag-soon { color: var(--c-ink-faint); }
+.entry-link {
+  font-family: var(--f-serif-jp);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--c-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-gold);
+  padding-bottom: 2px;
+  width: max-content;
+  transition: color var(--dur-short) var(--ease-out),
+              border-color var(--dur-short) var(--ease-out);
+}
+.entry-link:hover {
+  color: var(--c-gold-deep);
+  border-color: var(--c-gold-deep);
+}
+.entry-link.disabled {
+  color: var(--c-ink-faint);
+  border-color: var(--c-rule);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* =====================================================
+   HOW IT WORKS (3 step・番号+破線 縦stack)
+===================================================== */
+.steps {
+  display: flex;
+  flex-direction: column;
+}
+.step {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: var(--s-7);
+  padding: var(--s-7) 0;
+  border-bottom: 1px dashed var(--c-rule);
+  align-items: baseline;
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  font-family: var(--f-serif-en);
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--c-gold-deep);
+  line-height: 1;
+}
+.step-body { display: flex; flex-direction: column; gap: var(--s-2); }
+.step-title {
+  font-family: var(--f-serif-jp);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--c-ink);
+}
+.step-desc {
+  font-family: var(--f-serif-jp);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--c-ink-mute);
+}
+.step-agents {
+  display: inline-flex;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  flex-wrap: wrap;
+}
+.agent-chip {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border: 1px solid var(--c-rule);
+  color: var(--c-ink-soft);
+}
+
+/* --- Secondary CTA (steps直後の再掲・小さめ) --- */
+.cta-secondary-wrap {
+  text-align: center;
+  margin-top: var(--s-9);
+  padding-top: var(--s-8);
+  border-top: 1px solid var(--c-rule);
+}
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--f-serif-jp);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--c-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-gold);
+  padding-bottom: 3px;
+  transition: color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+.cta-secondary:hover { color: var(--c-gold-deep); border-color: var(--c-gold-deep); }
+
+/* =====================================================
+   COLOPHON (Workbench と同一言語)
+===================================================== */
+.colophon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s-7);
+  padding: var(--s-7) var(--s-9);
+  border-top: 1px solid var(--c-rule);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-mute);
+}
+.colophon-left { display: flex; align-items: center; gap: var(--s-5); }
+.colophon-brand {
+  font-family: var(--f-serif-en);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--c-ink);
+}
+.colophon-jp {
+  font-family: var(--f-serif-jp);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--c-ink-mute);
+}
+.colophon-entries { display: flex; gap: var(--s-5); flex-wrap: wrap; }
+.colophon-entries span::before {
+  content: "·";
+  margin-right: var(--s-3);
+  color: var(--c-gold);
+}
+.colophon-entries a { text-decoration: none; }
+.colophon-entries a:hover { color: var(--c-ink); }
+
+/* =====================================================
+   RESPONSIVE — Mobile gates
+===================================================== */
+@media (max-width: 900px) {
+  .entries { grid-template-columns: 1fr; }
+  .entry { border-right: none; }
+}
+@media (max-width: 700px) {
+  .masthead { padding: var(--s-5) var(--s-6); grid-template-columns: 1fr auto; }
+  .masthead-tagline { display: none; }
+  .hero { padding: var(--s-10) var(--s-6) var(--s-9); }
+  .section { padding: var(--s-9) var(--s-6); }
+  .step { grid-template-columns: 40px 1fr; gap: var(--s-5); }
+  .step-num { font-size: 24px; }
+  .cta-primary { padding: 16px 28px; font-size: 13px; letter-spacing: 0.1em; }
+}
+@media (max-width: 560px) {
+  .colophon { grid-template-columns: 1fr; gap: var(--s-3); text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">DeepFact Validator</span>
+    <span class="brand-jp">情報のObservability</span>
+  </div>
+  <div class="masthead-tagline">発信者個人を断定せず 構造を可視化する</div>
+  <div class="masthead-meta">
+    <span><span class="dot-live"></span>稼働中</span>
+    <span>v1.1.10</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">DEEPFACT VALIDATOR</p>
+  <h1 class="hero-title">
+    Observe the Structure.
+    <span class="hero-title-jp">情報の信頼度と利害関係を、AIエージェントがリアルタイムに可視化する</span>
+  </h1>
+  <p class="hero-lead">記事の書き手を断罪するのではなく、その情報が立っている構造――出所・中立度・事実整合性――を見る。</p>
+  <p class="hero-sub">人ではなく構造を見る</p>
+
+  <a href="/workbench" target="_blank" rel="noopener" class="cta-primary">
+    <span>今すぐ試す（インストール不要）</span>
+    <span class="arrow">→</span>
+  </a>
+  <span class="cta-note">Web版 Workbench を新しいタブで開きます</span>
+</section>
+
+<!-- ENTRY POINTS -->
+<section class="section">
+  <div class="section-label">
+    <span class="section-label-text">三つの入口</span>
+    <span class="section-label-rule"></span>
+  </div>
+
+  <div class="entries">
+    <div class="entry is-primary">
+      <span class="entry-index">01 · Web</span>
+      <h2 class="entry-name">Web版 Workbench</h2>
+      <p class="entry-desc">URL かテキストを貼るだけ。インストール不要で今すぐ体験できます。初めての方はまずこちらから。</p>
+      <span class="entry-tag">● 今すぐ使える</span>
+      <a href="/workbench" class="entry-link">今すぐ試す →</a>
+    </div>
+
+    <div class="entry">
+      <span class="entry-index">02 · Extension</span>
+      <h2 class="entry-name">Chrome 拡張</h2>
+      <p class="entry-desc">閲覧中のページに自動で介入し、信頼度を常時可視化。日常のブラウジングに組み込む常用向け。</p>
+      <span class="entry-tag tag-soon">○ 常用向け</span>
+      <a href="#" class="entry-link disabled">近日公開</a>
+    </div>
+
+    <div class="entry">
+      <span class="entry-index">03 · LINE</span>
+      <h2 class="entry-name">LINE Bot</h2>
+      <p class="entry-desc">URLやテキストをそのまま送るだけ。会話の延長で確認できる、最も手軽な常用向け入口。</p>
+      <span class="entry-tag">● 稼働中</span>
+      <span class="entry-link" style="border-color:var(--c-rule);color:var(--c-ink-mute);cursor:default">QR で友だち追加</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-label">
+    <span class="section-label-text">使い方</span>
+    <span class="section-label-rule"></span>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">01</span>
+      <div class="step-body">
+        <h3 class="step-title">URL かテキストを貼る</h3>
+        <p class="step-desc">検証したい記事の URL、または本文をそのまま置くだけ。会員登録は不要です。</p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">02</span>
+      <div class="step-body">
+        <h3 class="step-title">3体のAIエージェントが走査する</h3>
+        <p class="step-desc">Watcher・Investigator・Validator が並列に動き、出所・利害関係・事実整合性を追跡します。</p>
+        <div class="step-agents">
+          <span class="agent-chip">Watcher</span>
+          <span class="agent-chip">Investigator</span>
+          <span class="agent-chip">Validator</span>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <div class="step-body">
+        <h3 class="step-title">信頼度スコアと根拠が返る</h3>
+        <p class="step-desc">信頼度スコア・構造観察・一次情報候補・判定エビデンスまで、根拠付きで返します。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-secondary-wrap">
+    <a href="/workbench" class="cta-secondary">Web版 Workbench で試す →</a>
+  </div>
+</section>
+
+<!-- COLOPHON -->
+<footer class="colophon">
+  <div class="colophon-left">
+    <span class="colophon-brand">DeepFact Validator</span>
+    <span class="colophon-jp">株式会社 Liberaiz</span>
+  </div>
+  <div class="colophon-entries">
+    <span>Vertex AI Gemini 2.5 Flash</span>
+    <span>Cloud Run</span>
+    <span><a href="https://github.com/liberaiz/deepfact-validator" target="_blank" rel="noopener">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
