@@ -36,7 +36,7 @@
    ↓
 [Watcher Agent]      記事抽出・主張抽出・感情強度・出典 URL
    ↓
-[Investigator Agent] 100+ ドメイン信頼辞書 × Vertex AI Gemini で
+[Investigator Agent] 125 ドメイン信頼辞書 × Vertex AI Gemini で
                      論調バイアス／事実整合性／対立見解
    ↓
 [Validator Agent]    数値統合 + 自然言語の構造観察レポート生成
@@ -44,7 +44,7 @@
 出力（信頼度スコア + 構造観察 + 公的機関ソース URL）
 ```
 
-全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1 で出力を安定化（Vertex AI の決定性はベストエフォート）。加えて Firestore 入力ハッシュキャッシュにより、キャッシュ HIT 時は同一入力に対し完全一致の結果を返す。
+全エージェント: Vertex AI Gemini 2.5-flash × temperature=0.0 + seed=42 + top_k=1。加えて Firestore 入力ハッシュキャッシュにより、**一度解析した入力は以降 同一の判定結果（信頼度スコア・ラベル・構造観察・ソース）を返す再現性を実現**（2026-07-01 実測で同一入力の判定一致を確認）。
 
 ### 実機検証結果（2026-07-01 本番環境 v1.1.9 で実測）
 
@@ -80,12 +80,12 @@
 - **API**: FastAPI（Python 3.12）+ CORS Middleware
 - **第三者ソース照合**: Google Fact Check Tools API（IFCN 加盟団体・ja+en 並列）+ Wikipedia REST API（ja+en 並列）+ 15s timeout + httpx 5s + retry 1 回
 - **公的機関ソース上位常時挿入**: 厚労省 / PMDA / WHO / CDC / 総務省 + JFC / Snopes / PolitiFact / FullFact / Reuters Fact Check / AFP Fact Check
-- **信頼ドメイン辞書**: 100+ ドメイン（医療/政府/学術/国際機関/ファクトチェック団体）
-- **煽動パターン辞書**: 5 カテゴリの陰謀論用語辞書（マイクロチップ / 5G / 思想統制 等）
-- **Wikipedia noise filter**: アニメ・ゲーム・芸能等 40+ キーワードで TF-IDF 誤ヒット除外
+- **信頼ドメイン辞書**: 125 ドメイン（医療/政府/学術/国際機関/ファクトチェック団体）
+- **煽動パターン辞書**: 5 カテゴリ × 143 キーワード（マイクロチップ / 5G / 思想統制 等）
+- **Wikipedia noise filter**: アニメ・ゲーム・芸能等 47 キーワードで TF-IDF 誤ヒット除外
 - **同一入力決定化**: Firestore 入力ハッシュキャッシュ
 - **LINE Bot 永続 event loop**: `run_coroutine_threadsafe` で接続プール持続化
-- **Vector Search**: Vertex AI text-embedding-005 + Firestore + cosine similarity（過去類似主張照合・v0.3 実装済）
+- **Vector Search**: Vertex AI text-embedding-005 で解析記事を 768 次元ベクトル化し Firestore に蓄積（cosine similarity 基盤・実装済）。過去類似主張の照合を解析パイプラインへ統合するのは Phase3。
 - **データ**: Firestore（信頼ソース辞書・警告履歴・response cache・記事 embedding）
 - **Observability**: Cloud Logging 構造化ログ × 8 ログベースメトリクス（unknown_rate / cache_hit_rate / p95_latency / error_rate ほか）× 4 アラートポリシー（Cloud Monitoring）
 - **CI/CD パイプライン**: 信頼ソース辞書 YAML → GitHub Actions validate（yamllint + schema/range/enum/duplicate + smoke load test）→ Cloud Build → Cloud Run auto-deploy（badge: [![validate](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml/badge.svg)](https://github.com/liberaiz/deepfact-validator/actions/workflows/validate-trust-sources.yml)）
@@ -102,7 +102,7 @@
 ### チーム
 
 **株式会社 Liberaiz**（代表取締役 加藤貴志）
-医師・医学博士・独立家 × Anthropic Certified 三冠（Claude 101 / AI Fluency / Cowork）
+医師・医学博士・独立家
 「医師の習慣を AI Agent で社会全体に拡張する」をコアコンセプトに 1 人法人で運営
 
 ---
